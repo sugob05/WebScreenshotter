@@ -1,0 +1,23 @@
+{
+  "name": "webscreenshotter",
+  "version": "1.2.3",
+  "private": true,
+  "description": "Lokale Website-Aufnahmen mit Dublin Core, PREMIS und METS",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js --open",
+    "serve": "node server.js",
+    "test": "node --test test/*.test.js",
+    "test:integration": "node --test test/integration/*.test.js",
+    "check": "node scripts/check.js"
+  },
+  "dependencies": {
+    "@pdf-lib/upng": "1.0.1",
+    "pdf-lib": "1.17.1",
+    "playwright-core": "1.65.1",
+    "saxes": "6.0.0"
+  }
+}

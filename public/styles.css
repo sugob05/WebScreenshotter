@@ -1,0 +1,1260 @@
+@charset "UTF-8";
+
+/* Shared semantic colors. Components never need separate dark-mode overrides.
+   Text targets 4.5:1 contrast; input borders and focus rings target 3:1. */
+:root {
+  color-scheme: light;
+  --bg: #f3f6f3;
+  --surface: #ffffff;
+  --surface-alt: #eaf1ec;
+  --ink: #203c31;
+  --muted: #4c6157;
+  --line: #b8c7bd;
+  --control-border: #75897e;
+  --green: #166048;
+  --green-dark: #104c38;
+  --on-accent: #ffffff;
+  --tint: #e5f3eb;
+  --red: #a82724;
+  --error-bg: #fff0ed;
+  --amber: #80520a;
+  --focus: #174eac;
+  --sidebar: 18rem;
+  --radius: 0.85rem;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 100%;
+  line-height: 1.5;
+  font-synthesis: none;
+  color: var(--ink);
+  background: var(--bg);
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #101914;
+  --surface: #19251e;
+  --surface-alt: #22342a;
+  --ink: #eef6ef;
+  --muted: #bdcfc1;
+  --line: #435b4c;
+  --control-border: #8ca293;
+  --green: #8be3b5;
+  --green-dark: #a7f5c9;
+  --on-accent: #10291d;
+  --tint: #253f31;
+  --red: #ffb4ab;
+  --error-bg: #402824;
+  --amber: #f3cb82;
+  --focus: #9bc4ff;
+}
+
+/* Base typography and keyboard interaction. rem respects browser font settings. */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+a {
+  color: var(--green);
+  text-underline-offset: 0.2em;
+}
+[hidden] {
+  display: none !important;
+}
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+h1 {
+  font-size: clamp(1.75rem, 3vw, 2.4rem);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.75rem;
+}
+h2 {
+  font-size: 1.2rem;
+  line-height: 1.4;
+  margin-bottom: 0.4rem;
+}
+p {
+  line-height: 1.65;
+}
+small {
+  font-size: 0.875rem;
+}
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+[tabindex='-1']:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+:where(button, a, input, summary, [tabindex]) {
+  scroll-margin-block: 1rem;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -10rem;
+  z-index: 100;
+  padding: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--focus);
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Application frame. Short screens can scroll the desktop sidebar. */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar);
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.25rem 1.5rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 1.15rem;
+  font-weight: 750;
+  margin: 0 0 2.5rem;
+}
+.brand img {
+  flex-shrink: 0;
+}
+.brand > span {
+  min-width: 0;
+}
+.brand small {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  overflow-wrap: anywhere;
+}
+.nav-label,
+.eyebrow {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+}
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.8rem;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.nav-item:hover {
+  background: var(--surface-alt);
+}
+.nav-item.active {
+  color: var(--green);
+  background: var(--tint);
+  border-color: var(--green);
+  font-weight: 700;
+}
+.nav-icon {
+  width: 1.2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.nav-arrow {
+  margin-left: auto;
+}
+.sidebar-note {
+  margin: 2.5rem 0 1.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--line);
+}
+.small-icon {
+  display: block;
+  color: var(--green);
+  font-size: 1.7rem;
+  margin-bottom: 1rem;
+}
+.sidebar-note p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0.6rem 0 1rem;
+}
+.standard-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.standard-tags span,
+.card-tag,
+.count-badge {
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.sidebar-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.sidebar-bottom small {
+  margin-left: auto;
+}
+.online-dot,
+.status-light {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.online-dot.offline,
+.status-light.failed {
+  background: var(--red);
+}
+.status-light.waiting,
+.status-light.stopping,
+.status-light.cancelled {
+  background: var(--amber);
+}
+.workspace {
+  margin-left: var(--sidebar);
+  min-width: 0;
+}
+.topbar {
+  min-height: 4.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 0.875rem;
+}
+.breadcrumb,
+.separator {
+  color: var(--muted);
+}
+.separator {
+  margin: 0 0.7rem;
+}
+.local-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+main {
+  max-width: 100rem;
+  margin: auto;
+  padding: 2rem;
+}
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.page-heading p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+.page-heading .page-subtitle {
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+.heading-symbol {
+  display: none;
+}
+.form-reset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.card {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.card-heading {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.card-heading > div {
+  flex: 1;
+  min-width: 8rem;
+}
+.card-heading p {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0.2rem 0 0;
+}
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--green);
+  background: var(--tint);
+  font-size: 0.875rem;
+}
+.card-tag {
+  align-self: flex-start;
+}
+
+/* Native form controls retain browser keyboard and screen-reader semantics. */
+.fields {
+  display: grid;
+  gap: 1rem;
+}
+.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.span-two {
+  grid-column: 1 / -1;
+}
+label {
+  display: block;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+.required {
+  color: var(--red);
+}
+.optional {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-left: 0.3rem;
+}
+input:not([type='checkbox'], [type='radio']),
+select,
+textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin-top: 0.4rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+input:disabled,
+select:disabled {
+  background: var(--surface-alt);
+}
+.input-unit {
+  display: flex;
+  align-items: center;
+  margin-top: 0.4rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+.input-unit input:not([type='checkbox'], [type='radio']) {
+  border: 0;
+  margin: 0;
+}
+.input-unit > span {
+  padding: 0 0.75rem 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: 44px;
+  margin-top: 1.2rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+.checkbox-label input {
+  appearance: auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.1rem 0 0;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
+.checkbox-label strong {
+  font-weight: 600;
+}
+.checkbox-label small {
+  display: block;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+.checkbox-label.compact {
+  margin-top: 0.25rem;
+}
+.segmented,
+.format-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+.segmented label,
+.format-options label {
+  position: relative;
+  flex: 1 1 7rem;
+  cursor: pointer;
+}
+.segmented input,
+.format-options input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.segmented label > span,
+.format-options label > span {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  height: 100%;
+  padding: 0.7rem;
+  text-align: center;
+  border: 2px solid var(--control-border);
+  border-radius: 0.4rem;
+  color: var(--muted);
+  background: var(--surface);
+}
+.segmented input:checked + span,
+.format-options input:checked + span {
+  color: var(--green);
+  background: var(--tint);
+  border-color: var(--green);
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--green);
+}
+.segmented input:focus-visible + span,
+.format-options input:focus-visible + span {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.format-options label {
+  flex-basis: 4.5rem;
+}
+.format-options small {
+  font-weight: 400;
+  margin-top: 0.2rem;
+}
+.field-help,
+.quiet-note {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0.6rem 0 1rem;
+  overflow-wrap: anywhere;
+}
+.quiet-note {
+  margin: 1.5rem 0 0;
+}
+.url-input {
+  min-height: 13rem;
+  font-family: Consolas, monospace;
+}
+.divider {
+  border-top: 1px solid var(--line);
+  margin: 1.5rem 0;
+}
+.subheading {
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+.delay-fields {
+  max-width: 15rem;
+}
+.advanced {
+  margin-top: 1.25rem;
+}
+summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.6rem 0;
+  color: var(--green);
+}
+.advanced .fields {
+  margin-top: 0.75rem;
+}
+.extra-fields {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.metadata-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+  align-items: end;
+  gap: 0.75rem;
+}
+.metadata-row label {
+  min-width: 0;
+}
+.folder-input {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.folder-input input {
+  flex: 1;
+}
+.naming-fields {
+  margin-top: 1.5rem;
+}
+.filename-preview {
+  padding: 1rem;
+  border: 1px dashed var(--control-border);
+  border-radius: 0.5rem;
+  background: var(--surface-alt);
+  margin-top: 1.25rem;
+  overflow-wrap: anywhere;
+}
+.filename-preview > span,
+.filename-preview small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.filename-preview code {
+  display: block;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--green);
+}
+
+/* Buttons have at least a 44px target; essential actions never disappear on mobile. */
+.primary-button,
+.secondary-button,
+.text-button,
+.icon-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.4rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.primary-button {
+  color: var(--on-accent);
+  background: var(--green);
+  border-color: var(--green);
+}
+.primary-button:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+.secondary-button,
+.icon-button {
+  color: var(--green);
+  background: var(--surface);
+}
+.secondary-button:hover:not(:disabled),
+.icon-button:hover:not(:disabled) {
+  background: var(--tint);
+}
+.text-button {
+  color: var(--green);
+  border-color: transparent;
+  background: transparent;
+  padding-left: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  margin-top: 0.75rem;
+}
+.icon-button {
+  width: 44px;
+  flex-shrink: 0;
+  padding: 0.5rem;
+  font-size: 1.3rem;
+}
+.danger-button {
+  color: var(--red);
+  background: var(--surface);
+  border-color: var(--red);
+}
+.start-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.75rem 0;
+}
+.start-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.shield-icon {
+  color: var(--green);
+  font-size: 1.8rem;
+}
+.start-info strong,
+.start-info div > span {
+  display: block;
+}
+.start-info div > span {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-top: 0.3rem;
+}
+
+/* Status colors always accompany words. A separate live region announces progress
+   without repeatedly reading the complete scrollable activity log. */
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.status-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.status-heading > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.status-heading h2 {
+  margin: 0;
+}
+.status-badge {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.status-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 0;
+}
+.status-summary > div {
+  min-width: 0;
+}
+.status-summary p {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.progress-count {
+  white-space: nowrap;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.progress-count span {
+  color: var(--muted);
+  font-size: 1rem;
+}
+.url-drop-zone {
+  padding: 1rem;
+  border: 2px dashed var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-alt);
+}
+.url-drop-zone.drag-active {
+  border-color: var(--green);
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+.url-file-label {
+  margin-top: 1rem;
+}
+#url-file-input {
+  width: 100%;
+  min-width: 0;
+}
+#url-file-input::file-selector-button {
+  min-height: 44px;
+  margin-right: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+progress {
+  display: block;
+  width: calc(100% - 3rem);
+  height: 0.75rem;
+  margin: 0.5rem 1.5rem 1.5rem;
+  accent-color: var(--green);
+  border: 1px solid var(--control-border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: var(--surface-alt);
+}
+progress::-webkit-progress-bar {
+  background: var(--surface-alt);
+}
+progress::-webkit-progress-value {
+  background: var(--green);
+}
+progress::-moz-progress-bar {
+  background: var(--green);
+}
+.result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0 1.5rem 1.25rem;
+  color: var(--green);
+}
+.has-errors {
+  color: var(--red);
+}
+.has-warnings {
+  color: var(--amber);
+}
+.log-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  color: var(--muted);
+  background: var(--surface-alt);
+  font-size: 0.875rem;
+}
+.log-window {
+  min-height: 8rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+  background: var(--surface-alt);
+}
+.log-empty {
+  color: var(--muted);
+  padding: 1rem 0;
+}
+.log-row {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 1rem;
+  font-size: 0.875rem;
+  padding: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+.log-row time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.log-row.success {
+  color: var(--green);
+}
+.log-row.error {
+  color: var(--red);
+}
+.log-row.warning {
+  color: var(--amber);
+}
+.result-files {
+  padding: 1.5rem;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.result-files p {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.result-files > .secondary-button {
+  margin-bottom: 0.75rem;
+}
+.download-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.download-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+.results-details {
+  padding: 0 1.5rem 1.5rem;
+}
+.table-scroll {
+  overflow: auto;
+  margin-top: 1rem;
+}
+table {
+  width: 100%;
+  min-width: 32rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.875rem;
+}
+th {
+  text-align: left;
+  color: var(--ink);
+  background: var(--surface-alt);
+  padding: 0.75rem 0.5rem;
+}
+td {
+  padding: 0.8rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+th:first-child,
+th:nth-child(3) {
+  width: 4rem;
+}
+th:last-child {
+  width: 7rem;
+}
+td small {
+  display: block;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+td a {
+  display: inline-block;
+  padding-block: 0.5rem;
+}
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+  padding: 1.5rem 0;
+}
+.error-banner {
+  padding: 1rem;
+  border: 1px solid var(--red);
+  border-radius: 0.4rem;
+  color: var(--red);
+  background: var(--error-bg);
+  line-height: 1.6;
+  margin: 1rem 0;
+  overflow-wrap: anywhere;
+}
+.status-card .error-banner {
+  margin: 0 1.5rem 1rem;
+}
+
+/* Settings, folder picker and help dialog use the same surface tokens. */
+.settings-card {
+  max-width: 65rem;
+  margin-bottom: 1.5rem;
+}
+.settings-title {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.settings-title p {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+.browser-setting {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--line);
+}
+.browser-setting-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.browser-symbol {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: var(--green);
+  background: var(--tint);
+}
+.browser-status {
+  margin-left: auto;
+  color: var(--green);
+  font-size: 0.875rem;
+}
+.browser-status.unavailable {
+  color: var(--amber);
+}
+.browser-path-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.browser-path-row label {
+  flex: 1;
+  min-width: 0;
+}
+.browser-path-row input {
+  font-family: Consolas, monospace;
+}
+.browser-note {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0;
+  overflow-wrap: anywhere;
+}
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+.inline-message {
+  color: var(--green);
+  margin-top: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.inline-message:empty {
+  display: none;
+}
+.inline-message.error {
+  color: var(--red);
+}
+.info-panel {
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: var(--surface-alt);
+  padding: 1.25rem;
+  max-width: 65rem;
+  margin: 1.5rem 0;
+}
+.info-panel p {
+  color: var(--muted);
+  margin: 0.6rem 0 0;
+}
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 50;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  max-width: min(32rem, calc(100vw - 2rem));
+  padding: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--green);
+  border-radius: 0.65rem;
+  box-shadow: 0 0.3rem 1.5rem #0003;
+}
+dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: 85dvh;
+  overflow: auto;
+  padding: 1.5rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 1rem;
+}
+dialog::backdrop {
+  background: #07150dcc;
+}
+.dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.dialog-heading h2 {
+  margin: 0;
+}
+.dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.folder-path-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.folder-path-row input {
+  margin: 0;
+}
+.folder-roots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.folder-list {
+  min-height: 10rem;
+  max-height: 19rem;
+  overflow-y: auto;
+  padding: 0.4rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.4rem;
+}
+.folder-item {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.7rem;
+  text-align: left;
+  border: 0;
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: var(--green);
+  overflow-wrap: anywhere;
+}
+.folder-item:hover {
+  background: var(--tint);
+}
+.folder-item span {
+  margin-right: 0.75rem;
+}
+.help-steps {
+  padding-left: 1.5rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.help-steps li {
+  padding-bottom: 1rem;
+}
+.help-steps strong {
+  color: var(--ink);
+}
+
+/* Reflow at 320 CSS pixels also covers a 1280px viewport at 400% zoom. */
+@media (max-width: 78rem) {
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 64rem) {
+  :root {
+    --sidebar: 0px;
+  }
+  .sidebar {
+    position: static;
+    width: auto;
+    padding: 1rem 1.5rem;
+  }
+  .brand {
+    margin-bottom: 1rem;
+  }
+  .sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .nav-item {
+    width: auto;
+  }
+  .nav-label,
+  .sidebar-note {
+    display: none;
+  }
+  .sidebar-bottom {
+    margin-top: 1rem;
+  }
+  .topbar {
+    padding: 1rem 1.5rem;
+  }
+  main {
+    padding: 1.5rem;
+  }
+}
+@media (max-width: 38rem) {
+  main,
+  .sidebar,
+  .topbar {
+    padding: 1rem;
+  }
+  .sidebar nav {
+    flex-direction: column;
+  }
+  .nav-item {
+    width: 100%;
+  }
+  .card {
+    padding: 1.1rem;
+  }
+  .two-columns,
+  .metadata-row {
+    grid-template-columns: 1fr;
+  }
+  .metadata-row .icon-button {
+    justify-self: end;
+  }
+  .start-bar,
+  .browser-path-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .status-heading,
+  .status-summary,
+  .log-toolbar,
+  .log-window,
+  .result-files,
+  .results-details {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .status-summary {
+    flex-direction: column;
+  }
+  .log-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+  .folder-path-row {
+    flex-wrap: wrap;
+  }
+  .folder-path-row input {
+    flex: 1 1 10rem;
+  }
+  .folder-path-row #folder-go {
+    width: 100%;
+  }
+  dialog {
+    padding: 1rem;
+  }
+  .toast {
+    position: static;
+    margin: 1rem;
+    max-width: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+@media (forced-colors: active) {
+  :focus-visible,
+  [tabindex='-1']:focus {
+    outline-color: Highlight;
+  }
+  .segmented input:checked + span,
+  .format-options input:checked + span {
+    border: 3px solid Highlight;
+  }
+  .primary-button,
+  .secondary-button,
+  .icon-button,
+  .danger-button {
+    border: 1px solid ButtonText;
+  }
+}

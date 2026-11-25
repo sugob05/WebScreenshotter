@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>WebScreenshotter · Screenshots mit Metadaten</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+    <aside class="sidebar">
+      <a class="brand" href="#aufnahme" aria-label="WebScreenshotter Startseite">
+        <img src="/icon.svg" width="38" height="38" alt="" />
+        <span>
+          WebScreenshotter
+          <small>Autmatisiertes Anfertigen von Screenshots im Browser</small>
+        </span>
+      </a>
+      <div class="nav-label">ARBEITSPLATZ</div>
+      <nav aria-label="Hauptnavigation">
+        <a class="nav-item active" href="#aufnahme" data-view="capture">
+          <span class="nav-icon" aria-hidden="true">▣</span>
+          Neue Aufnahme
+          <span class="nav-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="nav-item" href="#einstellungen" data-view="settings">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          Browser &amp; Einstellungen
+        </a>
+        <button class="nav-item" type="button" id="help-open">
+          <span class="nav-icon" aria-hidden="true">ⓘ</span>
+          Kurzanleitung
+        </button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="small-icon" aria-hidden="true">◈</span>
+        <p>Jede Aufnahme erhält Herkunft, Metadaten und eine überprüfbare Dokumentation.</p>
+        <div class="standard-tags">
+          <span>Dublin Core</span>
+          <span>PREMIS</span>
+          <span>METS 2.0</span>
+        </div>
+      </div>
+      <div class="sidebar-bottom">
+        <span class="online-dot" aria-hidden="true" id="connection-dot"></span>
+        <span id="connection-text">Verbindung wird aufgebaut</span>
+        <small id="app-version">v1.0</small>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div>
+          <span class="breadcrumb">Arbeitsplatz</span>
+          <span class="separator">/</span>
+          <strong id="page-crumb">Neue Aufnahme</strong>
+        </div>
+        <span class="local-badge">
+          <span class="online-dot" aria-hidden="true"></span>
+          Lokal auf diesem PC
+        </span>
+      </header>
+      <main id="main" tabindex="-1">
+        <section id="capture-view">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">WEBSITES DOKUMENTIEREN</div>
+              <hgroup>
+                <h1 id="capture-title" tabindex="-1">WebScreenshotter</h1>
+                <p class="page-subtitle">
+                  Tool zum automatisierten Anfertigen von Screenshots mit Metadaten.
+                </p>
+              </hgroup>
+            </div>
+            <div class="heading-symbol" aria-hidden="true">
+              <span>+</span>
+              <i></i>
+              <span>+</span>
+            </div>
+          </div>
+          <form id="capture-form">
+            <fieldset id="capture-fields" class="form-reset" aria-label="Auftrag konfigurieren">
+              <p class="field-help">Mit * gekennzeichnete Felder sind Pflichtfelder.</p>
+              <div class="setup-grid">
+                <section class="card metadata-card" aria-labelledby="metadata-heading">
+                  <div class="card-heading">
+                    <span class="step-number" aria-hidden="true">01</span>
+                    <div>
+                      <h2 id="metadata-heading">Bestand &amp; Metadaten</h2>
+                      <p>Der Kontext Ihrer Aufnahmen.</p>
+                    </div>
+                    <span class="card-tag">DUBLIN CORE</span>
+                  </div>
+                  <div class="fields two-columns">
+                    <label>
+                      Username
+                      <span class="required">*</span>
+                      <input
+                        name="username"
+                        required
+                        maxlength="200"
+                        autocomplete="username"
+                        placeholder="z. B. m.mustermann"
+                      />
+                    </label>
+                    <label>
+                      Vorläufige Signatur
+                      <input name="signature" maxlength="500" placeholder="z. B. WEB-2026-001" />
+                    </label>
+                    <label class="span-two">
+                      Name des Bestands
+                      <span class="required">*</span>
+                      <input
+                        name="collection"
+                        required
+                        maxlength="500"
+                        placeholder="z. B. Kommunale Websites 2026"
+                      />
+                    </label>
+                    <label class="span-two">
+                      Beschreibung
+                      <span class="optional">optional</span>
+                      <textarea
+                        name="description"
+                        maxlength="10000"
+                        rows="2"
+                        placeholder="Was wird erfasst und in welchem Zusammenhang?"
+                      ></textarea>
+                    </label>
+                  </div>
+                  <div id="metadata-fields" class="extra-fields"></div>
+                  <button type="button" id="add-metadata" class="text-button">
+                    <span>＋</span>
+                    Metadatenfeld hinzufügen
+                  </button>
+                </section>
+                <section class="card sources-card" aria-labelledby="sources-heading">
+                  <div class="card-heading">
+                    <span class="step-number" aria-hidden="true">02</span>
+                    <div>
+                      <h2 id="sources-heading">Websites auswählen</h2>
+                      <p>Eine Adresse oder ein ganzer Bestand.</p>
+                    </div>
+                    <span id="url-count" class="count-badge">0 URLs</span>
+                  </div>
+                  <div class="segmented" role="group" aria-label="Art der URL-Eingabe">
+                    <label>
+                      <input type="radio" name="inputMode" value="urls" checked />
+                      <span>↗ Einzelne URLs</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="inputMode" value="sitemap" />
+                      <span>⌘ XML-Sitemap</span>
+                    </label>
+                  </div>
+                  <div id="urls-panel">
+                    <div
+                      id="url-drop-zone"
+                      class="url-drop-zone"
+                      role="group"
+                      aria-label="URL-Eingabe und TXT-Import"
+                    >
+                      <label>
+                        Website-Adressen
+                        <span class="required">*</span>
+                        <textarea
+                          name="urls"
+                          aria-describedby="urls-help"
+                          rows="7"
+                          class="url-input"
+                          placeholder="https://www.beispiel.de/&#10;https://www.beispiel.de/ueber-uns&#10;https://www.beispiel.de/kontakt"
+                          spellcheck="false"
+                        ></textarea>
+                      </label>
+                      <div class="field-help" id="urls-help">
+                        Eine vollständige URL pro Zeile. Doppelte Adressen werden zusammengefasst.
+                      </div>
+                      <label for="url-file-input" class="url-file-label">
+                        TXT-Dateien hierher ziehen oder auswählen
+                      </label>
+                      <input
+                        id="url-file-input"
+                        type="file"
+                        accept=".txt,text/plain"
+                        multiple
+                        aria-describedby="url-file-help"
+                      />
+                      <p class="field-help" id="url-file-help">
+                        Eine URL pro Zeile, zusammen höchstens 2 MiB und 10.000 URLs. UTF-8 oder
+                        UTF-16 mit BOM. Vorhandene URLs bleiben erhalten.
+                      </p>
+                      <p
+                        id="url-import-message"
+                        class="inline-message"
+                        role="status"
+                        aria-atomic="true"
+                      ></p>
+                    </div>
+                  </div>
+                  <div id="sitemap-panel" hidden>
+                    <label>
+                      Sitemap-Adresse
+                      <span class="required">*</span>
+                      <input
+                        type="url"
+                        name="sitemapUrl"
+                        placeholder="https://www.beispiel.de/sitemap.xml"
+                      />
+                    </label>
+                    <p class="field-help">
+                      Unterstützt Sitemap-Indizes, verschachtelte Sitemaps und .xml.gz.
+                    </p>
+                    <button type="button" id="sitemap-preview" class="secondary-button">
+                      Sitemap prüfen
+                    </button>
+                    <div id="sitemap-result" class="inline-message" role="status"></div>
+                    <p class="field-help">
+                      Die Sitemap wird beim Start erneut eingelesen. Maximal 10.000 eindeutige URLs
+                      pro Auftrag.
+                    </p>
+                  </div>
+                  <div class="quiet-note">
+                    <span>↳</span>
+                    Aufnahmen erfolgen nacheinander in einem separaten Headless-Browser.
+                  </div>
+                </section>
+                <section class="card" aria-labelledby="capture-heading">
+                  <div class="card-heading">
+                    <span class="step-number" aria-hidden="true">03</span>
+                    <div>
+                      <h2 id="capture-heading">Aufnahme konfigurieren</h2>
+                      <p>Browser, Bildausschnitt und Zeitabstände.</p>
+                    </div>
+                  </div>
+                  <div class="fields two-columns">
+                    <label class="span-two">
+                      Aufnahme-Browser
+                      <select name="browser" id="browser-select" required>
+                        <option value="">Browser werden gesucht …</option>
+                      </select>
+                    </label>
+                    <label>
+                      Fensterbreite
+                      <div class="input-unit">
+                        <input
+                          type="number"
+                          name="width"
+                          value="1440"
+                          min="320"
+                          max="7680"
+                          required
+                        />
+                        <span>px</span>
+                      </div>
+                    </label>
+                    <label>
+                      Fensterhöhe
+                      <div class="input-unit">
+                        <input
+                          type="number"
+                          name="height"
+                          value="900"
+                          min="240"
+                          max="4320"
+                          required
+                        />
+                        <span>px</span>
+                      </div>
+                    </label>
+                  </div>
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="fullPage" checked />
+                    <span>
+                      <strong>Gesamte Seite aufnehmen</strong>
+                      <small>Auch Inhalte unterhalb des sichtbaren Bereichs.</small>
+                    </span>
+                  </label>
+                  <label class="checkbox-label compact">
+                    <input type="checkbox" name="lazyLoad" checked />
+                    <span>Inhalte durch automatisches Scrollen nachladen</span>
+                  </label>
+                  <div class="divider"></div>
+                  <div class="subheading">Pause zwischen zwei Aufnahmen</div>
+                  <div class="segmented small" role="group" aria-label="Pausenart">
+                    <label>
+                      <input type="radio" name="delayMode" value="fixed" checked />
+                      <span>Fester Zeitraum</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="delayMode" value="random" />
+                      <span>Zufälliger Zeitraum</span>
+                    </label>
+                  </div>
+                  <div id="fixed-delay" class="delay-fields">
+                    <label>
+                      Wartezeit
+                      <div class="input-unit">
+                        <input
+                          type="number"
+                          name="delay"
+                          min="0"
+                          max="86400"
+                          step="0.1"
+                          value="2"
+                          required
+                        />
+                        <span>Sekunden</span>
+                      </div>
+                    </label>
+                  </div>
+                  <div id="random-delay" class="fields two-columns" hidden>
+                    <label>
+                      Mindestens
+                      <div class="input-unit">
+                        <input
+                          type="number"
+                          name="delayMin"
+                          min="0"
+                          max="86400"
+                          step="0.1"
+                          value="2"
+                        />
+                        <span>Sek.</span>
+                      </div>
+                    </label>
+                    <label>
+                      Höchstens
+                      <div class="input-unit">
+                        <input
+                          type="number"
+                          name="delayMax"
+                          min="0"
+                          max="86400"
+                          step="0.1"
+                          value="5"
+                        />
+                        <span>Sek.</span>
+                      </div>
+                    </label>
+                  </div>
+                  <details class="advanced">
+                    <summary>Weitere Aufnahmeoptionen</summary>
+                    <div class="fields two-columns">
+                      <label>
+                        Warten nach Seitenaufbau
+                        <div class="input-unit">
+                          <input
+                            type="number"
+                            name="settleTime"
+                            min="0"
+                            max="120"
+                            step="0.1"
+                            value="2"
+                            required
+                          />
+                          <span>Sek.</span>
+                        </div>
+                      </label>
+                      <label>
+                        Zeitlimit je Seitenaufruf
+                        <div class="input-unit">
+                          <input
+                            type="number"
+                            name="timeout"
+                            min="5"
+                            max="300"
+                            value="45"
+                            required
+                          />
+                          <span>Sek.</span>
+                        </div>
+                      </label>
+                    </div>
+                  </details>
+                </section>
+                <section class="card" aria-labelledby="storage-heading">
+                  <div class="card-heading">
+                    <span class="step-number" aria-hidden="true">04</span>
+                    <div>
+                      <h2 id="storage-heading">Ablage &amp; Dateinamen</h2>
+                      <p>Einheitlich benennen. Sicher zuordnen.</p>
+                    </div>
+                  </div>
+                  <label for="output-directory">
+                    Zielordner
+                    <span class="required">*</span>
+                  </label>
+                  <div class="folder-input">
+                    <input
+                      name="outputDir"
+                      id="output-directory"
+                      required
+                      maxlength="2000"
+                      placeholder="Absoluter Ordnerpfad"
+                    />
+                    <button
+                      type="button"
+                      id="choose-folder"
+                      class="icon-button"
+                      aria-label="Zielordner auswählen"
+                      title="Ordner auswählen"
+                    >
+                      ▱
+                    </button>
+                  </div>
+                  <p class="field-help">Jeder Auftrag erhält einen eigenen Unterordner.</p>
+                  <div class="subheading">Speicherformat</div>
+                  <div class="format-options" role="group" aria-label="Speicherformat">
+                    <label>
+                      <input type="radio" name="format" value="png" checked />
+                      <span>
+                        <strong>PNG</strong>
+                        <small>Verlustfrei</small>
+                      </span>
+                    </label>
+                    <label>
+                      <input type="radio" name="format" value="jpg" />
+                      <span>
+                        <strong>JPG</strong>
+                        <small>Kompakt</small>
+                      </span>
+                    </label>
+                    <label>
+                      <input type="radio" name="format" value="tif" />
+                      <span>
+                        <strong>TIF</strong>
+                        <small>Verlustfrei</small>
+                      </span>
+                    </label>
+                    <label>
+                      <input type="radio" name="format" value="pdf" />
+                      <span>
+                        <strong>PDF</strong>
+                        <small>Bildseiten</small>
+                      </span>
+                    </label>
+                  </div>
+                  <div id="pdf-options" hidden>
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="combinePdf"
+                        aria-describedby="combined-pdf-help"
+                      />
+                      <span><strong>Alle Aufnahmen in einer PDF</strong></span>
+                    </label>
+                    <p class="field-help" id="combined-pdf-help">
+                      Ausgeschaltet: eine PDF pro URL. Eingeschaltet: nur gesamt.pdf mit allen
+                      Aufnahmen in Eingabereihenfolge. Nach einem Abbruch enthält sie die fertigen
+                      Aufnahmen. Scheitert die Zusammenführung, bleiben die PDF-Zwischenstände zur
+                      Rettung erhalten.
+                    </p>
+                  </div>
+                  <label id="quality-field" hidden>
+                    JPEG-Qualität
+                    <span class="optional">1–100</span>
+                    <input type="number" name="quality" value="92" min="1" max="100" />
+                  </label>
+                  <p id="format-hint" class="field-help">
+                    PNG bewahrt die Bilddaten ohne Qualitätsverlust.
+                  </p>
+                  <div class="fields two-columns naming-fields">
+                    <label>
+                      Präfix
+                      <input name="prefix" value="web_" maxlength="80" placeholder="web_" />
+                    </label>
+                    <label>
+                      Suffix
+                      <input name="suffix" maxlength="80" placeholder="z. B. _archiv" />
+                    </label>
+                    <label>
+                      Startnummer
+                      <input
+                        type="number"
+                        name="startNumber"
+                        min="0"
+                        max="999999999"
+                        value="1"
+                        required
+                      />
+                    </label>
+                    <label>
+                      Mindeststellenzahl
+                      <input type="number" name="padding" min="1" max="12" value="4" required />
+                    </label>
+                  </div>
+                  <div class="filename-preview">
+                    <span>DATEINAME · VORSCHAU</span>
+                    <code id="filename-preview">web_0001.png</code>
+                    <small>Die Zahl wird mit führenden Nullen aufgefüllt.</small>
+                  </div>
+                </section>
+              </div>
+            </fieldset>
+            <div id="form-error" class="error-banner" tabindex="-1" role="alert" hidden></div>
+            <div class="start-bar">
+              <div class="start-info">
+                <span class="shield-icon" aria-hidden="true">✓</span>
+                <div>
+                  <strong>Mit Herkunft und Prüfsumme</strong>
+                  <span>Dublin Core + PREMIS → METS-2.0-Datei im Ausgabeordner</span>
+                </div>
+              </div>
+              <button type="submit" id="start-button" class="primary-button" disabled>
+                <span>▶</span>
+                Aufnahme starten
+              </button>
+            </div>
+          </form>
+          <section class="status-card" id="status-section" aria-labelledby="status-heading">
+            <div class="status-heading">
+              <div>
+                <span class="status-light" aria-hidden="true" id="status-light"></span>
+                <h2 id="status-heading" tabindex="-1">Bearbeitungsstatus</h2>
+                <span id="job-state" class="status-badge">Bereit</span>
+              </div>
+              <button type="button" id="stop-button" class="danger-button" hidden>
+                ■ Auftrag abbrechen
+              </button>
+            </div>
+            <div class="status-summary">
+              <div>
+                <strong id="progress-title">Bereit für die erste Aufnahme</strong>
+                <p id="progress-detail">
+                  Bestand beschreiben, Websites hinzufügen und Aufnahme starten.
+                </p>
+              </div>
+              <div class="progress-count" id="progress-count">
+                0
+                <span>/ 0</span>
+              </div>
+            </div>
+            <progress
+              id="progress-bar"
+              max="100"
+              value="0"
+              aria-label="Aufnahmefortschritt"
+            ></progress>
+            <p id="job-announcement" class="visually-hidden" role="status" aria-atomic="true"></p>
+            <div id="result-summary" class="result-summary" hidden></div>
+            <div id="job-error" class="error-banner" role="alert" hidden></div>
+            <div class="log-toolbar">
+              <span>AKTIVITÄTSPROTOKOLL</span>
+              <span>Uhrzeit · Aktion</span>
+            </div>
+            <div
+              id="log"
+              class="log-window"
+              role="log"
+              aria-label="Aktivitätsprotokoll"
+              aria-live="off"
+              tabindex="0"
+            >
+              <div class="log-empty">
+                <span>↳</span>
+                Hier erscheint der Fortschritt Ihres Auftrags.
+              </div>
+            </div>
+            <div id="result-files" class="result-files" hidden></div>
+            <details id="results-details" class="results-details" hidden>
+              <summary>Aufgenommene Seiten</summary>
+              <div class="table-scroll" role="region" aria-label="Aufgenommene Seiten" tabindex="0">
+                <table>
+                  <caption class="visually-hidden">Ergebnisse der bearbeiteten URLs</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Nr.</th>
+                      <th scope="col">Website / Datei</th>
+                      <th scope="col">HTTP</th>
+                      <th scope="col">Ergebnis</th>
+                    </tr>
+                  </thead>
+                  <tbody id="results-body"></tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+          <footer class="page-footer">
+            <span>Aufnahmen bleiben auf Ihrem Computer.</span>
+            <span>Für nachvollziehbare digitale Überlieferung.</span>
+          </footer>
+        </section>
+        <section id="settings-view" hidden>
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">LOKALE KONFIGURATION</div>
+              <h1 id="settings-title" tabindex="-1">Ihre Browser. Ihr Arbeitsplatz.</h1>
+              <p>Installierte Browser erkennen und individuelle Programmpfade hinterlegen.</p>
+            </div>
+          </div>
+          <section class="card settings-card" aria-labelledby="appearance-heading">
+            <h2 id="appearance-heading">Darstellung</h2>
+            <label class="checkbox-label">
+              <input id="dark-mode" type="checkbox" role="switch" aria-describedby="theme-help" />
+              <span>
+                <strong>Darkmode</strong>
+                <small>Dunkle Oberfläche verwenden</small>
+              </span>
+            </label>
+            <p class="field-help" id="theme-help">
+              Die Änderung gilt sofort und wird in diesem Browser gespeichert.
+            </p>
+            <p id="theme-message" class="inline-message" role="status"></p>
+          </section>
+          <section class="card settings-card" aria-labelledby="browsers-heading">
+            <div class="settings-title">
+              <div>
+                <h2 id="browsers-heading">Verfügbare Browser</h2>
+                <p>Leere Pfade verwenden die automatische Erkennung.</p>
+              </div>
+              <button id="rescan-browsers" class="secondary-button" type="button">
+                ↻ Erneut suchen
+              </button>
+            </div>
+            <form id="settings-form">
+              <div id="browser-settings"></div>
+              <div id="settings-message" class="inline-message" role="status"></div>
+              <div class="settings-actions">
+                <button class="primary-button" type="submit">Einstellungen speichern</button>
+              </div>
+            </form>
+          </section>
+          <div class="info-panel">
+            <strong>Zu Safari</strong>
+            <p>
+              Safari unterstützt keinen Headless-Betrieb. Ein vorhandener Programmpfad kann
+              dokumentiert werden; für Aufnahmen wählen Sie Chrome, Edge oder Firefox. Ein anderer
+              Browser wird niemals stillschweigend verwendet.
+            </p>
+          </div>
+          <div class="info-panel">
+            <strong>So arbeitet WebScreenshotter</strong>
+            <p>
+              Die Oberfläche und die Browsersteuerung laufen auf diesem PC. Aufnahmen nutzen ein
+              separates temporäres Browserprofil, ohne Ihre persönlichen Cookies oder Anmeldungen.
+              Einstellungen werden lokal gespeichert. Der Browsertest prüft Start und
+              Screenshot-Funktion.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+    <dialog id="folder-dialog" class="folder-dialog" aria-labelledby="folder-dialog-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">LOKALER SPEICHER</span>
+          <h2 id="folder-dialog-title">Zielordner auswählen</h2>
+        </div>
+        <button type="button" data-close="folder-dialog" class="icon-button" aria-label="Schließen">
+          ×
+        </button>
+      </div>
+      <div id="folder-roots" class="folder-roots"></div>
+      <div class="folder-path-row">
+        <button
+          type="button"
+          id="folder-up"
+          class="secondary-button"
+          aria-label="Übergeordneter Ordner"
+        >
+          ↑
+        </button>
+        <input id="folder-path" aria-label="Aktueller Ordnerpfad" />
+        <button type="button" id="folder-go" class="secondary-button">Öffnen</button>
+      </div>
+      <div id="folder-list" class="folder-list"></div>
+      <div id="folder-message" role="status" class="field-help"></div>
+      <div class="dialog-footer">
+        <button type="button" data-close="folder-dialog" class="secondary-button">Abbrechen</button>
+        <button type="button" id="folder-select" class="primary-button">
+          Diesen Ordner wählen
+        </button>
+      </div>
+    </dialog>
+    <dialog id="help-dialog" aria-labelledby="help-dialog-title">
+      <div class="dialog-heading">
+        <h2 id="help-dialog-title">In vier Schritten zur Aufnahme</h2>
+        <button type="button" data-close="help-dialog" class="icon-button" aria-label="Schließen">
+          ×
+        </button>
+      </div>
+      <ol class="help-steps">
+        <li>
+          <strong>Bestand beschreiben.</strong>
+          Username und Bestandsname sind Pflicht. Weitere Metadaten können Sie mit den 15
+          Dublin-Core-Begriffen ergänzen.
+        </li>
+        <li>
+          <strong>Adressen angeben.</strong>
+          Eine URL pro Zeile, eine TXT-Datei per Drag-and-drop oder die URL einer XML-Sitemap.
+          Sitemap-Indizes werden automatisch aufgelöst.
+        </li>
+        <li>
+          <strong>Aufnahme einstellen.</strong>
+          Browser, Fenstergröße und Pausen wählen. Die Pause beginnt nach der vorherigen Aufnahme.
+          Die zusätzliche Wartezeit hilft bei dynamischen Websites.
+        </li>
+        <li>
+          <strong>Ablage festlegen und starten.</strong>
+          Der neue Auftragsordner enthält screenshots/, mets.xml (METS 2.0 mit Dublin Core und
+          PREMIS 3.0), manifest.json, checksums.sha256 und protokoll.jsonl. Bei PDF können Sie
+          zwischen Einzeldateien und nur gesamt.pdf wählen. Unter den Ergebnissen ist außerdem ein
+          Excel-Export verfügbar.
+        </li>
+      </ol>
+      <div class="info-panel">
+        <strong>Wichtig für die Einordnung</strong>
+        <p>
+          Aufgenommen wird die gerenderte Ansicht einschließlich sichtbarer Cookie-Banner. PDF
+          enthält Bildseiten, TIF ist unkomprimiert. Es entstehen keine WARC-Dateien und kein PDF/A.
+          HTTP-Fehlerseiten werden aufgenommen und als Warnung gekennzeichnet. Nach einem Abbruch
+          bleiben abgeschlossene Aufnahmen mit Metadaten erhalten.
+        </p>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" data-close="help-dialog" class="primary-button">Verstanden</button>
+      </div>
+    </dialog>
+    <div id="toast" class="toast" hidden>
+      <span id="toast-message" role="status" aria-atomic="true"></span>
+      <button type="button" id="toast-close" class="icon-button" aria-label="Meldung schließen">
+        ×
+      </button>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+data/
+aufnahmen/
+.test-output/
+dist/
+# Portable Laufzeiten einschliesslich Firefox
+runtime/
+runtimes/
+*.log
