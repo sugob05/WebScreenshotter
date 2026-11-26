@@ -1,4 +1,13 @@
-# WebScreenshotter 1.3.0 – Prüfstand vom 26. November 2026
+# WebScreenshotter 1.3.1 – Prüfstand vom 26. November 2026
+
+## Ergänzungen in Version 1.3.1
+
+- „Start hier“ vor den technischen Einrichtungsabschnitten; Retry-Anzahl, unterschiedliche Wartezeiten, Fehlerfälle und Versuchshistorie vollständig erklärt. Excel und Wartungsdokumentation beschreiben ein abschließendes Ergebnis pro URL.
+- Bebilderte HTML-Anleitung aus Navigation und Hilfedialog erreichbar, jeweils in einem gekennzeichneten neuen Tab. Dokumentation und Bilder werden über eine feste HTTP-Allowlist angeboten; das externe Stylesheet funktioniert mit der vorhandenen Content Security Policy und offline.
+- Apache-2.0-Lizenztext und Lizenzkennungen ergänzt; eigene Projektlizenz und Drittanbieter-Lizenzen getrennt dokumentiert.
+- Öffentlicher Paketbau enthält ausschließlich Node.js als Laufzeit. Maschinenspezifische Browserdefinitionen liegen in ignorierter lokaler Konfiguration; zusätzliche lokale Laufzeiten und persönliche Daten werden nicht mitgegeben.
+- **50 von 50 automatisierten Tests bestanden**, keine übersprungenen Tests. Neue Prüfungen rufen Anleitung, Bilder, CSS, Lizenz und weiterführende Dateien über HTTP ab, prüfen Sprungziele, HEAD/POST und die Ablehnung privater Dateipfade. Die Browsererkennung wurde mit unabhängigen Konfigurationsdaten auf Pfadvorrang und passende Protokollzuordnung geprüft; JavaScript-Syntaxprüfung erfolgreich.
+- Keine erneute vollständige visuelle Browser- oder Screenreaderprüfung; die vorhandenen Grenzen der Oberflächen- und Aufnahmeprüfungen gelten weiter.
 
 ## Ergänzungen in Version 1.3.0
 
@@ -29,30 +38,28 @@
 
 ## Ergänzungen in Version 1.2.1
 
-- Der CMD-Starter öffnet die Oberfläche über den Windows-Standardbrowser. Die vorherige Sonderbehandlung für ein sichtbares Fenster des portablen Firefox wurde entfernt.
-- Der portable Firefox ist als optionale Headless-Testumgebung gekennzeichnet und wird bei neuen Eingaben nicht automatisch ausgewählt. Ausdrücklich gewählte oder gespeicherte Browser bleiben erhalten.
+- Der CMD-Starter öffnet die Oberfläche über den Windows-Standardbrowser. Ausdrücklich gewählte oder gespeicherte Aufnahme-Browser bleiben erhalten.
 - Syntaxprüfung erfolgreich; alle 35 Funktionstests mit der mitgelieferten Node.js-Laufzeit bestanden, keine Tests übersprungen.
 - Das tatsächliche Öffnen eines Browserfensters über die Windows-Zuordnung wurde in dieser eingeschränkten Umgebung nicht geprüft.
 
 ## Ergänzungen in Version 1.2.0
 
-- Windows-x64-Paket mit Node.js 24.22.3, Firefox 159.0 (Playwright-Build 1572), vollständigen Produktionsabhängigkeiten und Original-Lizenzhinweisen. Node-Archiv und `node.exe` stimmen mit den veröffentlichten SHA-256-Prüfsummen überein. Herkunft und Hashes stehen in `runtime/versions.json`.
+- Windows-x64-Paket mit Node.js 24.22.3, vollständigen Produktionsabhängigkeiten und Original-Lizenzhinweisen. Node-Archiv und `node.exe` stimmen mit den veröffentlichten SHA-256-Prüfsummen überein. Herkunft und Hashes stehen in `runtime/versions.json`.
 - TXT-Import per nativer Dateiauswahl und Drop-Ereignis. Vorhandene URLs bleiben erhalten; Duplikate werden entfernt. UTF-8, UTF-16 mit BOM, Zeilenenden, Kommentarzeilen, Fehlerangaben und Größen-/Anzahllimits berücksichtigt.
 - PDF-Auswahl jetzt alternativ: einzelne PDFs oder ausschließlich `gesamt.pdf`. Zwischenstände werden nach Speicherung der Gesamt-PDF und konsistenter Metadaten entfernt. Fehler erhalten rettbare Zwischenstände. Excel und API verweisen auf tatsächlich vorhandene Dateien; METS enthält Seitenbereiche der Gesamt-PDF.
 
 | Prüfung 1.2.0 | Ergebnis |
 | --- | --- |
 | Syntax und Funktionstests | **35 von 35 Tests bestanden**, keine übersprungenen Tests; mit der mitgelieferten Node.js-Version ausgeführt. |
-| Portabler Starter | Aus dem zusammengestellten Paket mit einem auf Windows-Systemordner beschränkten `PATH` gestartet. Keine systemweite Node.js-Installation verwendet, keine Nachinstallation beim Start. Lokale HTTP-Oberfläche erreichbar, mitgelieferter Firefox am relativen Paketpfad erkannt. Das automatische Öffnen des sichtbaren Firefox-Fensters wurde für diesen Test mit `--no-open` ausgelassen. |
+| Portabler Starter | Aus dem zusammengestellten Paket mit einem auf Windows-Systemordner beschränkten `PATH` gestartet. Keine systemweite Node.js-Installation verwendet, keine Nachinstallation beim Start. Lokale HTTP-Oberfläche erreichbar. Das automatische Öffnen eines Browserfensters wurde für diesen Test mit `--no-open` ausgelassen. |
 | METS 2.0 / PREMIS 3.0 | Auch der Modus mit ausschließlich einer Gesamt-PDF und `mets:area`-Seitenbereichen besteht die offiziellen XSD-Prüfungen. |
 | PDF und Excel | Einzel-/Gesamtmodus, Entfernen der Zwischenstände, Abbruch, Zusammenführungsfehler, Dateiverweise, SHA-256 und Excel-Zuordnung zur erhaltenen PDF geprüft. |
 | TXT-Dateiauswahl | Reale TXT-Datei über den Dateidialog eingelesen: eine neue URL ergänzt, ein Duplikat übersprungen. |
 | Drop und Fehlerfall | Drop mit einer Testdatei über denselben DOM-Ereignisweg ausgelöst; neue URL ergänzt, zwei Duplikate entfernt. Ungültige zweite Zeile gemeldet und bisherige Eingabe erhalten. Kein physischer Drag aus dem Windows-Explorer geprüft. |
 | PDF über die Oberfläche | Drei synthetische Aufnahmen ergeben genau eine sechsseitige PDF. Ergebnislinks zeigen Seiten 1–2, 3–4 und 5–6; keine Einzel-PDFs oder PDF-Zwischenstände verbleiben. |
 | Zugänglichkeit | axe-core 4.14.0 auf der erweiterten Aufnahmeseite: keine gemeldeten Verstöße, 30 bestandene Regeln; Kontrastprüfung unvollständig. Bei 320 CSS-Pixeln kein horizontales Überlaufen; Importbereich visuell geprüft. Keine Browser-Konsolenfehler. |
-| Firefox | Mitgelieferten Firefox erkannt und echten Headless-Start versucht. Browserprozess startet; `newPage` endet hier mit `Target crashed`. Diagnose: `RenderCompositorSWGL failed mapping default framebuffer` sowie ein fehlgeschlagener Registrierungszugriff. Erfolgreiche echte Firefox-Aufnahme in dieser Umgebung nicht bestätigt. |
 
-Die Tests der Oberfläche verwenden ausdrücklich synthetische Aufnahmen. Sie bestätigen den Import, die Bedienung und die Dateiausgabe, nicht das Rendering durch Firefox. Der Browser-Sandboxschutz wurde nicht abgeschaltet. Ein Praxistest auf einem gewöhnlichen Windows-PC über den mitgelieferten Starter bleibt erforderlich. Die bisherigen Grenzen der Screenreader-/WCAG-Prüfung gelten weiter.
+Die Tests der Oberfläche verwenden ausdrücklich synthetische Aufnahmen. Sie bestätigen den Import, die Bedienung und die Dateiausgabe, nicht das Rendering echter Websites. Der Browser-Sandboxschutz wurde nicht abgeschaltet. Ein Praxistest auf einem gewöhnlichen Windows-PC über den mitgelieferten Starter bleibt erforderlich. Die bisherigen Grenzen der Screenreader-/WCAG-Prüfung gelten weiter.
 
 ## Bisheriger Prüfstand 1.1.0 vom 24. November 2026
 

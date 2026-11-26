@@ -35,6 +35,14 @@
           <span class="nav-icon" aria-hidden="true">ⓘ</span>
           Kurzanleitung
         </button>
+        <a class="nav-item" href="/ANLEITUNG.html#start-hier" target="_blank" rel="noopener">
+          <span class="nav-icon" aria-hidden="true">↗</span>
+          <span>
+            Ausführliche Anleitung
+            <br />
+            <small>Öffnet einen neuen Tab</small>
+          </span>
+        </a>
       </nav>
       <div class="sidebar-note">
         <span class="small-icon" aria-hidden="true">◈</span>
@@ -783,7 +791,9 @@
         <li>
           <strong>Aufnahme einstellen.</strong>
           Browser, Fenstergröße und Pausen wählen. Die Pause beginnt nach der vorherigen Aufnahme.
-          Die zusätzliche Wartezeit hilft bei dynamischen Websites.
+          Die zusätzliche Wartezeit hilft bei dynamischen Websites. Unter „Weitere Aufnahmeoptionen“
+          können Sie Wiederholungen mit eigener Wartezeit aktivieren: 0 bedeutet keine Wiederholung,
+          2 erlauben insgesamt drei Versuche pro URL.
         </li>
         <li>
           <strong>Ablage festlegen und starten.</strong>
@@ -798,11 +808,21 @@
         <p>
           Aufgenommen wird die gerenderte Ansicht einschließlich sichtbarer Cookie-Banner. PDF
           enthält Bildseiten, TIF ist unkomprimiert. Es entstehen keine WARC-Dateien und kein PDF/A.
-          HTTP-Fehlerseiten werden aufgenommen und als Warnung gekennzeichnet. Nach einem Abbruch
+          HTTP-Fehlerseiten werden bei aktivierten Retries erneut abgerufen. Die letzte erreichbare
+          Fehlerseite wird als Warnung aufgenommen. Alle Versuche bleiben in Protokoll und Metadaten
+          dokumentiert; Excel enthält ein abschließendes Ergebnis pro URL. Nach einem Abbruch
           bleiben abgeschlossene Aufnahmen mit Metadaten erhalten.
         </p>
       </div>
       <div class="dialog-footer">
+        <a
+          class="secondary-button"
+          href="/ANLEITUNG.html#start-hier"
+          target="_blank"
+          rel="noopener"
+        >
+          Ausführliche Anleitung (neuer Tab)
+        </a>
         <button type="button" data-close="help-dialog" class="primary-button">Verstanden</button>
       </div>
     </dialog>

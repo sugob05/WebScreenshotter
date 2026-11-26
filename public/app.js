@@ -399,14 +399,14 @@ function renderBrowsers(list) {
     option.disabled = !browser.available;
     select.add(option);
   }
-  // Keep an explicit choice; the bundled test browser is never a default.
+  // Preserve explicit choices; local definitions may opt out of auto-selection.
   const preferred =
     list.find((browser) => browser.id === selected && browser.available) ||
-    list.find((browser) => browser.available && !browser.bundled);
+    list.find((browser) => browser.available && browser.autoSelect !== false);
   select.value = preferred?.id || '';
   if (!preferred) {
     const prompt = list.some((browser) => browser.available)
-      ? 'Aufnahme-Browser wählen – Firefox steht für Tests bereit'
+      ? 'Bitte einen verfügbaren Aufnahme-Browser wählen'
       : 'Kein Browser gefunden – bitte Einstellungen öffnen';
     const option = new Option(prompt, '');
     select.prepend(option);
@@ -929,7 +929,8 @@ async function initialize() {
       )
     )
       captureField('browser').value =
-        availableBrowsers.find((browser) => browser.available)?.id || '';
+        availableBrowsers.find((browser) => browser.available && browser.autoSelect !== false)
+          ?.id || '';
     queryElement('#app-version').textContent = `v${data.version}`;
     const recent =
       data.jobs.find((job) => !TERMINAL_STATUSES.includes(job.status)) || data.jobs.at(-1);

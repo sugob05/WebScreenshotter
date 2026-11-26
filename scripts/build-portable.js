@@ -14,24 +14,13 @@ const target = path.join(dist, 'WebScreenshotter-Windows-x64');
 const archive = `${target}.zip`;
 if (process.platform !== 'win32')
   throw new Error('Dieser Paketbau verwendet die Windows-ZIP-Funktion.');
-for (const filename of [
-  'runtime/node/node.exe',
-  'runtime/node/LICENSE',
-  'runtime/firefox/firefox.exe',
-  'runtime/versions.json',
-]) {
+for (const filename of ['runtime/node/node.exe', 'runtime/node/LICENSE', 'runtime/versions.json']) {
   await access(path.join(root, filename));
 }
 const versions = JSON.parse(await readFile(path.join(root, 'runtime/versions.json'), 'utf8'));
-for (const [name, executable] of [
-  ['node', 'node.exe'],
-  ['firefox', 'firefox.exe'],
-]) {
-  const bytes = await readFile(path.join(root, 'runtime', name, executable));
-  if (createHash('sha256').update(bytes).digest('hex') !== versions[name].executableSha256) {
-    throw new Error(`Die ${name}-Laufzeit stimmt nicht mit runtime/versions.json überein.`);
-  }
-}
+const nodeBytes = await readFile(path.join(root, 'runtime/node/node.exe'));
+if (createHash('sha256').update(nodeBytes).digest('hex') !== versions.node?.executableSha256)
+  throw new Error('Die Node.js-Laufzeit stimmt nicht mit runtime/versions.json überein.');
 // Only this generated directory may be replaced; never accept an arbitrary rm target.
 if (path.dirname(path.resolve(target)) !== path.resolve(dist))
   throw new Error('Unsicherer Paketpfad.');
@@ -45,7 +34,8 @@ const inputs = [
   'docs',
   'scripts',
   'test',
-  'runtime',
+  'runtime/node',
+  'LICENSE',
   'package.json',
   'package-lock.json',
   'server.js',
@@ -58,7 +48,17 @@ const inputs = [
   'WebScreenshotter-starten.cmd',
 ];
 for (const filename of inputs)
-  await cp(path.join(root, filename), path.join(target, filename), { recursive: true });
+  await cp(path.join(root, filename), path.join(target, filename), {
+    recursive: true,
+    filter: (source) => !source.endsWith('.local.json'),
+  });
+
+// Only the required runtime and its provenance belong in a public release.
+// Never copy the whole runtime directory or machine-specific configuration.
+await writeFile(
+  path.join(target, 'runtime/versions.json'),
+  JSON.stringify({ platform: 'win32', architecture: 'x64', node: versions.node }, null, 2) + '\n',
+);
 
 // Copy precisely the locked production packages, preserving their license files.
 const lockfile = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'));

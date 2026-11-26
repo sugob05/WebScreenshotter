@@ -1,11 +1,12 @@
-# Mitgelieferte Software
+# Lizenzen und mitgelieferte Software
 
-Das Windows-x64-Paket enthält Node.js 24.22.3 und Firefox 159.0 (Playwright-Build 1572). Die Programmdateien stammen unverändert aus den unten genannten Herstellerarchiven. WebScreenshotter ist ein eigenständiges Projekt und kein Produkt von Mozilla, Microsoft oder dem Node.js-Projekt.
+WebScreenshotter und die eigene Dokumentation stehen unter der Apache License, Version 2.0; der vollständige Text steht in [LICENSE](LICENSE). Die nachfolgend genannten Drittanbieter-Komponenten behalten ihre eigenen Lizenzen und Urheberhinweise.
+
+Das Windows-x64-Paket enthält Node.js 24.22.3 sowie die in `package-lock.json` festgelegten Produktionsabhängigkeiten. Die Node.js-Dateien stammen unverändert aus dem unten genannten Herstellerarchiv. WebScreenshotter ist ein eigenständiges Projekt und kein Produkt von Microsoft oder dem Node.js-Projekt. Aufnahme-Browser werden separat bereitgestellt.
 
 | Bestandteil | Lizenzinformationen im Paket |
 | --- | --- |
 | Node.js 24.22.3 | `runtime/node/LICENSE`, einschließlich der Hinweise zu enthaltenen Bibliotheken. |
-| Firefox 159.0 / Playwright 1572 | `runtime/firefox-LICENSE.html`; auch im Browser unter `about:license`. MPL 2.0 und dort aufgeführte weitere Lizenzen. |
 | playwright-core 1.65.1 | Apache-2.0; `node_modules/playwright-core/LICENSE` und `NOTICE`. |
 | pdf-lib 1.17.1 | MIT; Lizenz im jeweiligen Paketordner. |
 | @pdf-lib/upng 1.0.1, @pdf-lib/standard-fonts 1.0.0 | MIT; Lizenzen in den jeweiligen Paketordnern. |
@@ -18,8 +19,6 @@ Bezugsquellen und Quellcode:
 
 - [Node.js 24.22.3](https://nodejs.org/en/blog/release/v24.22.3) mit offiziellen SHA-256-Prüfsummen. Archiv und `node.exe` wurden damit verglichen.
 - [Node.js Quellcode 24.22.3](https://nodejs.org/dist/v24.22.3/node-v24.22.3.tar.gz)
-- [Playwright Firefox 1572 für Windows x64](https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/1572/firefox-win64.zip)
-- [Playwright Firefox-Buildquellen und Patches](https://github.com/microsoft/playwright/tree/v1.65.1/browser_patches/firefox)
-- [Mozilla Firefox-Quellcode](https://hg.mozilla.org/releases/mozilla-release/)
+- [Playwright-Quellcode](https://github.com/microsoft/playwright)
 
-`runtime/versions.json` dokumentiert Quellen, Versionen und Hashes. Der Firefox-Archivhash dokumentiert die per HTTPS bezogene Datei; er wurde nicht mit einer separat signierten Prüfsummenliste abgeglichen. Die zur Automation passende Firefox-Ausgabe wird hier als „Firefox (mitgeliefert)“ angezeigt; es handelt sich nicht um die PortableApps-Ausgabe. Browser und Automationsbibliothek beim Aktualisieren gemeinsam prüfen. Die Original-Lizenzdateien bleiben im Paket erhalten.
+`runtime/versions.json` im Windows-Paket dokumentiert Quelle, Version und Hashes von Node.js. Die Original-Lizenzdateien und vorhandenen NOTICE-Dateien der Abhängigkeiten bleiben im jeweiligen Paketordner erhalten. Die externen METS-/PREMIS-Prüfschemas unter `test/schemas/` sind keine eigenen Projektwerke; ihre Herkunft und Hinweise stehen in [test/schemas/README.md](test/schemas/README.md).

@@ -18,6 +18,8 @@ import { JobManager } from './src/jobs.js';
 import { EXCEL_FILENAME } from './src/excel.js';
 
 const CONTENT_TYPES = {
+  '': 'text/plain; charset=utf-8',
+  '.md': 'text/plain; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -31,6 +33,29 @@ const CONTENT_TYPES = {
   '.jsonl': 'application/x-ndjson; charset=utf-8',
   '.sha256': 'text/plain; charset=utf-8',
 };
+
+// Documentation is public, but no directory is exposed wholesale. In particular,
+// runtime files, local settings and arbitrary project files stay inaccessible.
+const DOCUMENTATION_FILES = new Map(
+  [
+    'ANLEITUNG.html',
+    'README.md',
+    'WARTUNG.md',
+    'PRUEFBERICHT.md',
+    'THIRD_PARTY.md',
+    'LICENSE',
+    'test/schemas/README.md',
+    'docs/anleitung.css',
+    ...[
+      '01-node-portabel',
+      '02-metadaten-urls',
+      '03-aufnahme-ablage',
+      '04-pdf-varianten',
+      '05-fortschritt-export',
+      '06-browser-darkmode',
+    ].map((name) => `docs/images/${name}.svg`),
+  ].map((filename) => [`/${filename}`, filename]),
+);
 
 function sendJson(response, data, status = 200) {
   response.writeHead(status, {
@@ -58,7 +83,7 @@ async function readJsonBody(request) {
   }
 }
 
-async function streamFile(response, file, attachment = false) {
+async function streamFile(response, file, attachment = false, headOnly = false) {
   const info = await stat(file);
   if (!info.isFile()) throw new InputError('Datei nicht gefunden.', 404);
   response.writeHead(200, {
@@ -74,6 +99,7 @@ async function streamFile(response, file, attachment = false) {
         }
       : {}),
   });
+  if (headOnly) return response.end();
   const stream = createReadStream(file);
   stream.on('error', () => response.destroy());
   response.on('close', () => stream.destroy());
@@ -280,12 +306,16 @@ export async function createApp({ port = Number(process.env.PORT || 4317) } = {}
         '/styles.css': 'styles.css',
         '/icon.svg': 'icon.svg',
       };
-      if (!publicFiles[route]) throw new InputError('Seite nicht gefunden.', 404);
-      if (request.method === 'HEAD') {
-        response.writeHead(200);
-        return response.end();
-      }
-      return await streamFile(response, path.join(ROOT, 'public', publicFiles[route]));
+      const relativeFile = publicFiles[route]
+        ? `public/${publicFiles[route]}`
+        : DOCUMENTATION_FILES.get(route);
+      if (!relativeFile) throw new InputError('Seite nicht gefunden.', 404);
+      return await streamFile(
+        response,
+        path.join(ROOT, relativeFile),
+        false,
+        request.method === 'HEAD',
+      );
     } catch (error) {
       if (response.headersSent) return response.end();
       const status =

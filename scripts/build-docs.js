@@ -216,15 +216,15 @@ ${text(38, 666, 'Die nummerierten Schritte und vollständigen Erläuterungen ste
       'Browserpfade und Darstellung verwalten',
       'Browser und Einstellungen enthält eigene Programmpfade, Browser testen, die Speicherfunktion und den Darkmode. Der Browser der Oberfläche ist unabhängig vom Aufnahme-Browser.',
       card(38, 115, 640, 457, 'Browser & Einstellungen') +
-        text(61, 193, 'Firefox', 27, 700) +
+        text(61, 193, 'Microsoft Edge', 27, 700) +
         field(
           61,
           241,
           594,
-          'Eigener Programmpfad für Firefox',
+          'Eigener Programmpfad für Microsoft Edge',
           'Leer lassen = automatisch erkennen',
         ) +
-        text(61, 337, 'Der portable Firefox liegt unter runtime/firefox.', 21) +
+        text(61, 337, 'Den verfügbaren Aufnahme-Browser hier prüfen.', 21) +
         button(61, 372, 208, 'Browser testen') +
         lines(
           61,
@@ -342,10 +342,8 @@ ${text(38, 666, 'Die nummerierten Schritte und vollständigen Erläuterungen ste
     while (index < rows.length && rows[index].trim()) paragraph.push(rows[index++]);
     blocks.push(`<p>${inline(paragraph.join(' '))}</p>`);
   }
-  const html = `<!doctype html>
-<html lang="de"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WebScreenshotter – Anleitung</title>
-<style>
+  // A separate stylesheet works both offline and under the app's strict CSP.
+  const stylesheet = `
 :root{color-scheme:light dark;font-family:system-ui,"Segoe UI",sans-serif;line-height:1.65;color:#18382d;background:#f4f7f4}
 *{box-sizing:border-box}body{max-width:1120px;margin:auto;padding:2rem}main{background:#fff;padding:clamp(1rem,4vw,3rem);border-radius:1rem}
 h1,h2,h3{line-height:1.3;scroll-margin-top:1rem;overflow-wrap:anywhere}h1{font-size:2.1rem}h2{font-size:1.6rem;margin-top:2.8rem;border-bottom:1px solid #c2d3c7;padding-bottom:.5rem}h3{font-size:1.2rem;margin-top:2rem}
@@ -357,7 +355,13 @@ li{margin:.35rem 0}.note{border-left:4px solid #176348;background:#eaf3ed;paddin
 .skip{display:block;margin-bottom:1rem}@media(max-width:600px){body{padding:.5rem}}
 @media(prefers-color-scheme:dark){:root{color:#e0eee4;background:#101e18}main{background:#192c23}a{color:#8be0ac}code,pre{background:#243d30}.note,th{background:#294233}th,td{border-color:#526b5c}}
 @media print{body,main{background:white;color:black;padding:0;max-width:none}.skip{display:none}a{color:black}h2,h3{break-after:avoid}figure,pre,tr{break-inside:avoid}pre{white-space:pre-wrap}}
-</style></head><body><a class="skip" href="#anleitung-inhalt">Zum Inhalt springen</a><main id="anleitung-inhalt" tabindex="-1">${blocks.join('\n')}</main></body></html>\n`;
+`;
+  const html = `<!doctype html>
+<html lang="de"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WebScreenshotter – Anleitung</title>
+<link rel="stylesheet" href="docs/anleitung.css"/>
+</head><body><a class="skip" href="#anleitung-inhalt">Zum Inhalt springen</a><main id="anleitung-inhalt" tabindex="-1">${blocks.join('\n')}</main></body></html>\n`;
+  await writeFile(path.join(root, 'docs/anleitung.css'), stylesheet.trim() + '\n', 'utf8');
   await writeFile(path.join(root, 'ANLEITUNG.html'), html, 'utf8');
   console.log('Sechs SVG-Bedienhilfen und ANLEITUNG.html aus README.md erzeugt.');
 }

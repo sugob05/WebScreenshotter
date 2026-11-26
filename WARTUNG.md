@@ -2,9 +2,11 @@
 
 Die Anwendung bleibt JavaScript, HTML und CSS ohne Build-Schritt. Node.js ab Version 22 startet den lokalen Dienst; `WebScreenshotter-starten.cmd` ist der einzige Windows-Starter. Alte Verknüpfungen auf `Screenshotter-starten.cmd` müssen auf diesen Namen umgestellt werden.
 
-Das portable Windows-x64-Paket enthält unter `runtime/` Node.js und die zur festgelegten Playwright-Version passende Firefox-Ausgabe. Der Starter bevorzugt die relative Laufzeit und lädt keine Pakete nach. `scripts/build-portable.js` kopiert ausschließlich freigegebene Projektdateien und die gesperrten Produktionsabhängigkeiten; Einstellungen, Browserprofile, Aufnahmen und Prüfdaten werden ausgeschlossen. Quellen und Prüfsummen stehen in `runtime/versions.json`, Lizenzhinweise in `THIRD_PARTY.md`. Browser und Playwright immer zusammen aktualisieren.
+Das portable Windows-x64-Paket enthält unter `runtime/node/` Node.js. Der Starter bevorzugt diese relative Laufzeit und lädt keine Pakete nach. `scripts/build-portable.js` kopiert ausschließlich freigegebene Projektdateien, Node.js und die gesperrten Produktionsabhängigkeiten. Weitere lokale Laufzeiten, Einstellungen, Browserprofile, Aufnahmen und Prüfdaten werden ausgeschlossen. Der erzeugte Herkunftsnachweis `runtime/versions.json` enthält nur die mitgelieferte Laufzeit; Lizenzhinweise stehen in `THIRD_PARTY.md`, die Projektlizenz Apache-2.0 in `LICENSE`.
 
-Die Oberfläche wird über die Betriebssystem-Zuordnung für HTTP-Adressen im Standardbrowser geöffnet. Dieser Start ist unabhängig vom gewählten Headless-Aufnahme-Browser. Der portable Firefox dient ausschließlich optionalen Headless-Tests; die Anwendung startet damit kein sichtbares Fenster und wählt ihn nicht automatisch als Aufnahme-Browser aus. Eine ausdrücklich gewählte oder gespeicherte Browserauswahl bleibt erhalten.
+Die Oberfläche wird über die Betriebssystem-Zuordnung für HTTP-Adressen im Standardbrowser geöffnet. Dieser Start ist unabhängig vom gewählten Headless-Aufnahme-Browser. Eine ausdrücklich gewählte oder gespeicherte Browserauswahl bleibt erhalten.
+
+Maschinenspezifische Browserdefinitionen können in `data/browsers.local.json` liegen. Pro Browserkennung sind ein absoluter `executablePath`, optional `protocol: "playwright"` für einen passenden Automations-Build und `autoSelect: false` zum Ausschluss aus der automatischen Vorauswahl möglich. Eigene Pfade aus der Oberfläche haben Vorrang; das lokale Protokoll gilt nur für die dazugehörige ausführbare Datei. Die Datei bleibt über `data/` und `*.local.json` von Git ausgeschlossen und wird nicht ins Paket kopiert. Konkrete Arbeitsplatzpfade gehören ausschließlich in diese lokale Konfiguration.
 
 ## Zuständigkeiten
 
@@ -25,19 +27,21 @@ Die Oberfläche wird über die Betriebssystem-Zuordnung für HTTP-Adressen im St
 | `public/app.js` | Formularzustand, DOM-Ausgabe, Tastaturfokus, Auftragsanzeige und Ereignisstrom. |
 | `public/theme.js`, `public/styles.css` | Frühes Laden der Farbauswahl und gemeinsame Farben, Abstände und Größen. |
 | `public/url-import.js` | Reine TXT-Dekodierung und URL-Prüfung ohne DOM-Abhängigkeit; Dateiauswahl und Drop nutzen denselben Importweg. |
-| `scripts/build-docs.js` | Erzeugt sechs beschriftete SVG-Abbildungen und die offline lesbare HTML-Anleitung aus der README; benötigt nur Node.js. |
+| `scripts/build-docs.js` | Erzeugt sechs beschriftete SVG-Abbildungen, `docs/anleitung.css` und die offline lesbare HTML-Anleitung aus der README; benötigt nur Node.js. |
 
 ## Daten und Ablauf
 
 Ein Auftrag enthält seine geprüfte `config`, URLs in Eingabereihenfolge sowie `records`. Jede bearbeitete URL erzeugt genau einen abschließenden Record, auch bei Fehlern. `sequence` ist die eingestellte Laufnummer. `filename`, `bytes` und `sha256` werden erst nach erfolgreichem Speichern vergeben.
 
-Ab Version 1.3.0 enthält `records` genau ein abschließendes Ergebnis pro URL. Die obersten Ergebnisfelder beschreiben den letzten Versuch; `attempts` bewahrt alle tatsächlichen Versuche mit separaten Ereigniskennungen und `attemptCount` deren Anzahl. Während einer Retry-Pause liegt der aktuelle URL-Datensatz in `job.currentRecord`; `persist()` nimmt ihn mit `pending: true` in Manifest und METS auf, während die URL noch in `remainingUrls` steht. Der Fortschrittszähler steigt erst nach Ende der Wiederholungsfolge. Ein Abbruch während der Pause erhält den letzten tatsächlichen Versuch mit `retryInterrupted: true`, ohne einen weiteren Abruf zu erfinden.
+Die obersten Ergebnisfelder eines Records beschreiben den letzten Versuch; `attempts` bewahrt alle tatsächlichen Versuche mit separaten Ereigniskennungen und `attemptCount` deren Anzahl. Während einer Retry-Pause liegt der aktuelle URL-Datensatz in `job.currentRecord`; `persist()` nimmt ihn mit `pending: true` in Manifest und METS auf, während die URL noch in `remainingUrls` steht. Der Fortschrittszähler steigt erst nach Ende der Wiederholungsfolge. Ein Abbruch während der Pause erhält den letzten tatsächlichen Versuch mit `retryInterrupted: true`, ohne einen weiteren Abruf zu erfinden.
 
 `retries` zählt zusätzliche Versuche (0–20). `retryDelayMode`, `retryDelay`, `retryDelayMin` und `retryDelayMax` steuern ausschließlich die Retry-Pause. HTTP-Fehlerseiten werden vor einem weiteren Versuch ohne Bilddatei dokumentiert; die letzte erreichbare HTTP-Fehlerseite bleibt als Warnungsaufnahme erhalten. `capture-attempt`-Protokolleinträge enthalten einen numerischen HTTP-Status oder `null`, falls keine Antwort vorliegt. METS verknüpft alle PREMIS-Ereignisse mit der einen URL-Struktur, Excel und Gesamt-PDF verwenden weiterhin nur das erhaltene Ergebnis. Geschlossene Versuche ignorieren verspätete Response-Ereignisse.
 
 Der Ablauf ist `preparing` → `running`/`waiting` → `finalizing` → `completed`, `cancelled` oder `failed`. `JobManager.run()` übernimmt den Abschluss auch bei Ausnahmen. Browserabsturz und Benutzerabbruch haben unterschiedliche Ergebnisse. Testbrowser und PDF-Zusammenführung können am Konstruktor des JobManagers ersetzt werden, ohne die Produktionsimplementierung umzuschreiben.
 
 `snapshot()` begrenzt Protokoll und Ergebnistabelle für die Oberfläche. METS, Manifest, Gesamt-PDF und Excel greifen immer auf die vollständigen Records zu. Neue Exporte dürfen deshalb nicht auf dem verkürzten Snapshot aufbauen.
+
+Excel schreibt genau eine Zeile pro abgeschlossenem URL-Ergebnis, einschließlich endgültiger Fehler. Es iteriert über `job.records`, nicht über `record.attempts`. Frühere Fehlversuche werden deshalb nicht zu zusätzlichen Excel-Zeilen; die vollständige Versuchshistorie bleibt in JSONL, Manifest und PREMIS. Noch nicht bearbeitete URLs stehen ausschließlich in `remainingUrls`.
 
 Bei `format: 'pdf'` und `combinePdf: true` entsteht ausschließlich `gesamt.pdf`. Die Aufnahme sichert zunächst `temporaryPdf`-Records unter `pdf-zwischenstand/`. `combinedPdf.sources` hält für jede Quelle Objekt-ID und ersten/letzten Seitenindex (ab 1) fest; `record.pdfPages` übernimmt diesen Bereich. Fehlerhafte Abrufe liefern keine Quelldatei. Gesamt-PDF und METS/Manifest werden vor dem Entfernen der Zwischenstände gespeichert. METS verweist danach über `area` mit `BETYPE="PAGE"` auf die Gesamt-PDF. PREMIS behält die historischen Quellobjekte. Ein Fehler beim Zusammenführen erhält alle Zwischenstände und wird als `combinedPdfError` angezeigt und gespeichert. Bei einem Bereinigungsfehler bleiben Gesamt-PDF und Warnung erhalten.
 
@@ -71,6 +75,8 @@ npx prettier@3.9.10 --write public src server.js scripts test prettier.config.js
 `prettier.config.js` hält die Formatierung fest. Kommentare erklären Zuständigkeiten, Datenverträge, besondere Formatanforderungen und Fehlerbehandlung; sie sollen nicht lediglich jede Codezeile wiederholen.
 
 ## Manuelle Prüfung der Oberfläche
+
+Die ausführliche Anleitung ist aus Navigation und Hilfedialog in einem gekennzeichneten neuen Tab erreichbar. `server.js` gibt HTML, Stylesheet, sechs Abbildungen und verlinkte Dokumentationsdateien über eine feste Allowlist frei. Keine allgemeine Dateifreigabe für den Projektordner einführen. Das externe Stylesheet hält die HTML-Anleitung mit der bestehenden Content Security Policy kompatibel; dieselben relativen Links funktionieren beim direkten Öffnen der Datei. Nach README-Änderungen `scripts/build-docs.js` ausführen und die Anleitung sowohl über HTTP als auch offline prüfen.
 
 Beide Farbschemata prüfen, Darkmode umschalten und neu laden. Mit Tab, Umschalt+Tab, Pfeiltasten, Leertaste, Enter und Escape alle Formulare und Dialoge bedienen. Nach dem Entfernen eines Metadatenfelds darf der Fokus nicht verloren gehen. Der Sprunglink führt zum Hauptinhalt. Statusmeldungen werden über eine zurückhaltende Live-Region ausgegeben; der laufende Countdown liest nicht ständig neu vor.
 

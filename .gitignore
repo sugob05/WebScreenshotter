@@ -3,7 +3,8 @@ data/
 aufnahmen/
 .test-output/
 dist/
-# Portable Laufzeiten einschliesslich Firefox
+# Lokale Laufzeiten und private Konfigurationen
 runtime/
 runtimes/
+*.local.json
 *.log

@@ -2,18 +2,31 @@
 
 **Tool zum automatisierten Anfertigen von Screenshots mit Metadaten.**
 
-WebScreenshotter nimmt Websites automatisch auf und speichert die Bilder mit nachvollziehbaren Metadaten. Die Oberfläche läuft lokal im Windows-Standardbrowser. Ein JavaScript-Dienst unter Node.js steuert den Aufnahme-Browser im Hintergrund und schreibt die Dateien auf den PC.
+WebScreenshotter nimmt Websites automatisch auf und speichert die Bilder mit nachvollziehbaren Metadaten auf Ihrem PC. Die Oberfläche läuft lokal im Windows-Standardbrowser.
 
-**Version 1.3.0 · Dokumentationsstand: 26. November 2026**
+**Version 1.3.1 · Dokumentationsstand: 26. November 2026 · Lizenz: Apache-2.0**
 
-**Node.js ab Version 22 ist erforderlich.** Im vollständigen Windows-Paket ist Node.js bereits enthalten. Beim Bezug des Quellcodes aus Git müssen die Laufzeit und die Projektabhängigkeiten ergänzt werden. Python ist für die heutige Anwendung nicht erforderlich.
+## Start hier
 
-> **Bebilderte Offline-Anleitung:** [ANLEITUNG.html](ANLEITUNG.html) per Doppelklick im Browser öffnen. Diese Datei zeigt den Inhalt der README mit allen Bildern. Die Anwendung selbst starten Sie über **WebScreenshotter-starten.cmd**.
+Für den ersten Auftrag mit dem vollständigen **Windows-Paket**:
+
+1. Die ZIP-Datei mit Rechtsklick → **Alle extrahieren** vollständig entpacken.
+2. Im entpackten Ordner **WebScreenshotter-starten.cmd doppelklicken**. Das schwarze CMD-Fenster geöffnet lassen; es betreibt die Anwendung.
+3. Die Oberfläche öffnet sich im Standardbrowser. Falls sie nicht erscheint, die Adresse aus dem CMD-Fenster öffnen, normalerweise `http://127.0.0.1:4317`.
+4. **Username**, **Name des Bestands** und eine vollständige Website-Adresse eintragen. Der Username ist eine Bearbeiterangabe, kein Benutzerkonto.
+5. Einen verfügbaren **Aufnahme-Browser**, **PNG** und den **Zielordner** wählen. Die übrigen Werte können für den ersten Auftrag unverändert bleiben.
+6. **Aufnahme starten** anklicken. Nach Abschluss liegen Bilder und Metadaten im neu angelegten Auftragsordner innerhalb des Zielordners.
+7. Zum Beenden in das CMD-Fenster wechseln und **Strg+C** drücken. Das Schließen des Browser-Tabs allein beendet den Dienst nicht.
+
+**Hilfe beim Start:** Fehlt Node.js, folgen Sie [Portables Node.js einrichten](#portables-nodejs-einrichten). Haben Sie den Quellcode aus Git statt des vollständigen Pakets, beginnen Sie bei [Start aus dem Git-Quellcode](#start-aus-dem-git-quellcode). Andere Meldungen erläutert die [Fehlerbehebung](#fehlerbehebung).
+
+> **Ausführliche bebilderte Anleitung:** In der Oberfläche links **Ausführliche Anleitung** wählen; der Link öffnet einen neuen Tab, sodass das Aufnahmeformular erhalten bleibt. Derselbe Link steht in der **Kurzanleitung**. Ohne laufende Anwendung können Sie [ANLEITUNG.html](ANLEITUNG.html) per Doppelklick öffnen. Bilder und Gestaltung liegen im mitgelieferten Ordner `docs`; diesen zusammen mit der HTML-Datei aufbewahren.
 
 Die Abbildungen sind schematische Bedienhilfen mit Beispielwerten, keine Screenshots eines tatsächlich ausgeführten Aufnahmeauftrags. Alle wesentlichen Informationen stehen zusätzlich im Text.
 
 ## Inhalt
 
+- [Start hier](#start-hier)
 - [Entstehung des Tools](#entstehung-des-tools)
 - [Funktionsumfang](#funktionsumfang)
 - [Voraussetzungen](#voraussetzungen)
@@ -25,6 +38,7 @@ Die Abbildungen sind schematische Bedienhilfen mit Beispielwerten, keine Screens
 - [XML-Sitemaps](#xml-sitemaps)
 - [Browser und Einstellungen](#browser-und-einstellungen)
 - [Aufnahmeoptionen und Zeitabstände](#aufnahmeoptionen-und-zeitabstände)
+- [Fehlgeschlagene Aufnahmen wiederholen](#fehlgeschlagene-aufnahmen-wiederholen)
 - [Ablage und Dateinamen](#ablage-und-dateinamen)
 - [PDF-Ausgabe](#pdf-ausgabe)
 - [Fortschritt und Abbruch](#fortschritt-und-abbruch)
@@ -34,6 +48,7 @@ Die Abbildungen sind schematische Bedienhilfen mit Beispielwerten, keine Screens
 - [Aufbewahren und Übertragen](#aufbewahren-und-übertragen)
 - [Fehlerbehebung](#fehlerbehebung)
 - [Technische Grenzen](#technische-grenzen)
+- [Lizenz](#lizenz)
 - [Entwicklung und Git](#entwicklung-und-git)
 - [Quellen und weiterführende Dokumentation](#quellen-und-weiterführende-dokumentation)
 
@@ -70,7 +85,7 @@ Aufgenommen wird die gerenderte Ansicht einer Website. Das Tool erstellt keine v
 | Betriebssystem für das portable Paket | Windows 10 oder 11, 64-Bit-Intel-/AMD-Prozessor, also x64. |
 | Node.js | Mindestens Version 22; enthalten ist Node.js 24.22.3. Diese Anleitung verwendet die weiterhin unterstützte 24-LTS-Reihe. |
 | Browser für die Oberfläche | Ein eingerichteter Windows-Standardbrowser. |
-| Browser für Aufnahmen | Chrome/Chromium, Edge oder Firefox. Der beigelegte Firefox ist eine optionale Headless-Testumgebung. |
+| Browser für Aufnahmen | Ein auf dem PC verfügbarer Chrome/Chromium, Edge oder Firefox. Aufnahme-Browser werden separat bereitgestellt. |
 | Speicherort | Vollständig entpackter Programmordner und beschreibbarer Zielordner. |
 | Netzwerk | Für die aufzunehmenden Websites; beim Einrichten eines Git-Checkouts zusätzlich für die Paketinstallation. |
 | Speicherplatz / Arbeitsspeicher | Abhängig von Anzahl, Länge und Format der Aufnahmen. Lange Seiten und Gesamt-PDFs können viel Speicher benötigen. |
@@ -211,7 +226,7 @@ Die erste Zeile ergänzt Node.js nur für dieses PowerShell-Fenster im Suchpfad.
 
 Ist Node.js bereits systemweit installiert, können Sie stattdessen `node --version` prüfen und im Projektordner `npm.cmd ci` ausführen.
 
-Ein Aufnahme-Browser muss ebenfalls verfügbar sein. Chrome und Edge werden an üblichen Installationsorten gesucht. Der portable Firefox ist eine optionale Beigabe des vollständigen Windows-Pakets; er wird nicht automatisch aus Git heruntergeladen.
+Ein Aufnahme-Browser muss ebenfalls auf dem PC verfügbar sein. Chrome, Edge und Firefox werden an üblichen Installationsorten gesucht. Bei Bedarf unter **Browser & Einstellungen** einen eigenen Programmpfad hinterlegen und mit **Browser testen** prüfen.
 
 ## Erster Auftrag Schritt für Schritt
 
@@ -306,7 +321,7 @@ Die Sitemap wird beim Start erneut eingelesen und kann sich seit der Vorschau ge
 
 ## Browser und Einstellungen
 
-![Schematische Einstellungen für Firefox mit Programmpfad und Browser testen sowie einer dunklen Darstellung.](docs/images/06-browser-darkmode.svg)
+![Schematische Einstellungen für Microsoft Edge mit Programmpfad und Browser testen sowie einer dunklen Darstellung.](docs/images/06-browser-darkmode.svg)
 
 ### Erkennung und eigene Programmpfade
 
@@ -330,11 +345,10 @@ Die tatsächlichen Installationsorte können abweichen. Ein eigener Pfad übersc
 | --- | --- |
 | Chrome / Chromium | Headless-Aufnahmen über Playwright/CDP mit dem installierten Programm. |
 | Microsoft Edge | Headless-Aufnahmen über Playwright/CDP mit dem installierten Programm. |
-| Firefox aus dem Paket | Optionaler, zur Playwright-Version passender Build unter `runtime/firefox`. Die Oberfläche nennt ihn **Firefox**. Für Tests ausdrücklich auswählen. |
-| Eigener Firefox | Ansteuerung über WebDriver BiDi; Kompatibilität mit **Browser testen** prüfen. |
+| Firefox | Ansteuerung über WebDriver BiDi; Kompatibilität mit **Browser testen** prüfen. |
 | Safari | Pfad kann erkannt oder hinterlegt werden. Wegen fehlenden unterstützten Headless-Betriebs nicht als Aufnahme-Browser auswählbar. |
 
-Der portable Firefox startet nicht die Bedienoberfläche und wird bei neuen Eingaben nicht automatisch vorausgewählt. Eine ausdrücklich gewählte oder gespeicherte Browserauswahl bleibt erhalten.
+Der Aufnahme-Browser arbeitet im Hintergrund. Die Bedienoberfläche öffnet sich im Windows-Standardbrowser. Eine ausdrücklich gewählte oder gespeicherte Browserauswahl bleibt erhalten.
 
 Aufnahmen verwenden isolierte Profile. Persönliche Cookies, Anmeldungen und Erweiterungen des normalen Browsers werden nicht übernommen. Login-Seiten und Cookie-Banner können daher im Bild erscheinen.
 
@@ -348,7 +362,7 @@ Aufnahmen verwenden isolierte Profile. Persönliche Cookies, Anmeldungen und Erw
 | Fensterhöhe | Standard 900 CSS-Pixel, erlaubt 240–4320. |
 | Gesamte Seite aufnehmen | Aktiv: auch Inhalte unterhalb des sichtbaren Bereichs. Inaktiv: eingestellter Ausschnitt. |
 | Inhalte durch automatisches Scrollen nachladen | Versucht, beim Scrollen nachgeladene Inhalte vor der Aufnahme sichtbar zu machen. |
-| Fester Zeitraum | Gleiche Pause nach jeder Aufnahme; Standard 2 Sekunden. |
+| Fester Zeitraum | Gleiche Pause vor der nächsten URL, nachdem alle Versuche der vorherigen URL beendet sind; Standard 2 Sekunden. |
 | Zufälliger Zeitraum | Neue Pause zwischen Minimum und Maximum; Standard 2–5 Sekunden. |
 | Warten nach Seitenaufbau | Zusätzliche Zeit vor der Aufnahme; Standard 2 Sekunden, erlaubt 0–120. |
 | Zeitlimit je Seitenaufruf | Standard 45 Sekunden, erlaubt 5–300. |
@@ -366,6 +380,22 @@ Unter **Aufnahme konfigurieren → Weitere Aufnahmeoptionen** stehen die **Wiede
 
 Erlaubt sind 0–20 zusätzliche Versuche und Wartezeiten von 0–86.400 Sekunden. Die feste Retry-Wartezeit beträgt zunächst 5 Sekunden; für die zufällige Wartezeit sind 2–10 Sekunden voreingestellt. Diese Zeiten sind unabhängig von der Pause zwischen unterschiedlichen URLs.
 
+| Eingestellte Retries | Höchstens mögliche Versuche pro URL |
+| --- | --- |
+| 0 | 1 erster Versuch, keine Wiederholung. |
+| 1 | 1 erster Versuch + 1 Wiederholung = 2 Versuche. |
+| 2 | 1 erster Versuch + 2 Wiederholungen = 3 Versuche. |
+| 20 | 1 erster Versuch + 20 Wiederholungen = 21 Versuche. |
+
+Die Wartezeiten haben unterschiedliche Aufgaben:
+
+| Einstellung | Wann sie gilt |
+| --- | --- |
+| Pause zwischen Seitenaufrufen | Vor der nächsten **anderen URL**, sobald die vorherige URL einschließlich aller Wiederholungen abgeschlossen ist. Vor der ersten URL gibt es diese Pause nicht. |
+| Wartezeit zwischen Wiederholungen | Zwischen einem Fehlversuch und dem nächsten Versuch **derselben URL**. Die normale Seitenpause wird hier nicht zusätzlich addiert. Ein Zufallswert wird für jede Wiederholung neu gewählt. |
+| Wartezeit nach Seitenaufbau | Zusätzliche Ladezeit vor dem Screenshot, etwa für dynamische Inhalte. Sie ersetzt keine der beiden Pausen. |
+| Zeitlimit pro Seitenaufruf | Grenze für einzelne Browseraktionen, damit ein nicht reagierender Browser nicht unbegrenzt blockiert. Es ist kein Gesamtzeitlimit für den Auftrag oder alle Retries zusammen. |
+
 Wiederholt werden fehlgeschlagene Aufnahmen, Netzwerkfehler und Antworten des aufgerufenen Hauptdokuments mit HTTP-Status 4xx/5xx. Ein erfolgreicher Versuch beendet die Wiederholungen sofort. Hinweise wie das Erreichen des Scroll-Limits lösen allein keine Wiederholung aus. Benutzerabbruch und ein abgestürzter Aufnahme-Browser beenden den Ablauf; ein abgestürzter Browser wird nicht automatisch neu gestartet.
 
 Zwischengeschaltete HTTP-Fehlerseiten erzeugen keine zusätzlichen Bilddateien. Ist auch der letzte Versuch eine HTTP-Fehlerseite, wird sie nach Möglichkeit als Aufnahme mit Warnung erhalten. Bei 0 Retries bleibt damit das bisherige Verhalten erhalten. Reine Aufnahme- oder Netzwerkfehler ohne gespeichertes Bild bleiben als fehlgeschlagenes Ergebnis dokumentiert.
@@ -373,6 +403,10 @@ Zwischengeschaltete HTTP-Fehlerseiten erzeugen keine zusätzlichen Bilddateien. 
 **Jeder Versuch wird protokolliert**, auch wenn eine spätere Wiederholung erfolgreich ist: mit URL, Versuchsnummer, Zeitpunkten, Ergebnis, Fehlertext und letztem verfügbarem HTTP-Status. Gibt es keine Serverantwort, lautet der Status im Manifest und JSON-Protokoll ausdrücklich `null`; die Oberfläche meldet den fehlenden Status. Es wird kein HTTP-Code erfunden. Beispielsweise kann ein Screenshotfehler nach einer erfolgreichen Serverantwort trotzdem HTTP 200 besitzen.
 
 `protokoll.jsonl` enthält je Versuch einen Datensatz vom Typ `capture-attempt`, das Manifest bewahrt die Historie in `records[].attempts`, und METS enthält pro Versuch ein eigenes PREMIS-Ereignis. Fehlversuche werden bereits vor der Retry-Wartezeit gesichert. Dateinamen, Laufnummern, Gesamt-PDF und Excel behalten einen Ergebniseintrag pro URL; Excel zeigt den abschließenden Versuch bzw. die erhaltene Datei.
+
+**Beispiel:** Bei zwei eingestellten Retries antwortet eine URL zuerst mit HTTP 503 und beim zweiten Versuch mit HTTP 200. Nach dem ersten Fehler wartet die Anwendung die eingestellte Retry-Zeit ab. Nach dem erfolgreichen zweiten Versuch endet die Wiederholung. Es entstehen eine Bilddatei, ein abschließendes URL-Ergebnis und eine Excel-Zeile; beide Versuche einschließlich HTTP 503 bleiben in Protokoll, Manifest und PREMIS erhalten. Erst vor der nächsten URL gilt wieder die normale Seitenpause.
+
+Die Ergebnistabelle zeigt den letzten Versuch und die Anzahl dokumentierter Versuche. Für die vollständige Historie nach Abschluss **protokoll.jsonl**, **manifest.json** oder **mets.xml** öffnen. Ein Abbruch während der Retry-Pause erhält die bisherigen Versuche, ohne einen weiteren Abruf zu erfinden. Die Historie ermöglicht die Nachprüfung; nach einem Neustart wird ein Auftrag nicht automatisch fortgesetzt.
 
 ## Ablage und Dateinamen
 
@@ -391,7 +425,7 @@ Der **Zielordner** ist der übergeordnete Speicherort. Jeder Auftrag erhält ein
 | Format | PNG |
 | Ergebnis | `web_0007_archiv.png`, `web_0008_archiv.png`, … |
 
-Führende Nullen füllen die Mindeststellenzahl auf. Größere Zahlen werden nicht abgeschnitten. Die Nummerierung folgt den URL-Versuchen; nach einem Fehler kann eine Nummer ohne Bilddatei auftreten.
+Führende Nullen füllen die Mindeststellenzahl auf. Größere Zahlen werden nicht abgeschnitten. Die Nummerierung folgt den URLs in Eingabereihenfolge. Alle Versuche derselben URL behalten dieselbe Laufnummer; nach einem endgültigen Fehler kann eine Nummer ohne Bilddatei auftreten.
 
 Startnummer: 0–999.999.999. Mindeststellen: 1–12. Präfix und Suffix dürfen keine Pfadtrenner oder ungültigen Windows-Dateinamenzeichen enthalten.
 
@@ -459,7 +493,9 @@ Die Datei hat genau diese acht Spalten, eine fixierte Kopfzeile und Filter. IDs,
 
 Im Gesamt-PDF-Modus bleibt eine Zeile pro URL. Dateiname, Hash und Pfad zeigen auf `gesamt.pdf`; Seitenbereiche stehen in Ergebnistabelle, METS und Manifest.
 
-Excel verwendet alle dokumentierten Versuche, auch wenn die Oberfläche nur die letzten 500 Ergebnisse zeigt. Exportieren Sie während der laufenden Dienstsitzung. Nach einem Neustart können frühere Aufträge nicht erneut über die Oberfläche exportiert werden.
+Excel verwendet alle abschließenden URL-Ergebnisse des Auftrags, auch wenn die Oberfläche nur die letzten 500 Ergebnisse zeigt. Jede bearbeitete URL erhält genau eine Zeile, auch bei einem endgültigen Fehler. Statuscode und übrige Angaben beziehen sich auf den letzten Versuch; frühere Versuche stehen in Protokoll, Manifest und PREMIS, nicht in zusätzlichen Excel-Zeilen. Noch nicht bearbeitete URLs stehen im Manifest unter `remainingUrls`.
+
+Exportieren Sie während der laufenden Dienstsitzung. Nach einem Neustart können frühere Aufträge nicht erneut über die Oberfläche exportiert werden.
 
 ## Metadaten und Dateiformat
 
@@ -539,7 +575,7 @@ Der Einstellungsordner ist über `WEBSCREENSHOTTER_DATA_DIR` änderbar; auch der
 3. Eigene absolute Browserpfade und Zielordner prüfen.
 4. `WebScreenshotter-starten.cmd` doppelklicken.
 
-Node.js und der beigelegte Firefox werden relativ zum Projektordner gefunden. Auch ein beschreibbares USB-Laufwerk ist möglich.
+Node.js wird relativ zum Projektordner gefunden. Auch ein beschreibbares USB-Laufwerk ist möglich. Auf dem Ziel-PC muss zusätzlich ein geeigneter Aufnahme-Browser verfügbar sein; eigene absolute Browserpfade dort erneut prüfen.
 
 ### Aufnahmen übertragen
 
@@ -558,7 +594,6 @@ Die Metadaten enthalten Bearbeiter- und Bestandsangaben, URLs und technische Auf
 | Port bereits belegt | Laufende Instanz verwenden oder beenden; alternativ anderen Port setzen. |
 | „Aufnahme starten“ deaktiviert | Verbindung, Pflichtfelder und verfügbaren ausgewählten Aufnahme-Browser prüfen. |
 | Kein Aufnahme-Browser | **Browser & Einstellungen**, Programmpfad und **Browser testen** prüfen. |
-| Firefox nicht vorausgewählt | Den beigelegten Testbrowser ausdrücklich als Aufnahme-Browser auswählen. |
 | Browser-Test hängt / Browser stürzt ab | Dienst in einem normalen lokalen Terminal starten; Browserinstallation und lokale Richtlinien prüfen. Unterprozesse müssen erlaubt sein. |
 | TXT-Import fehlgeschlagen | Gemeldete Zeile, HTTP(S)-Adresse und Kodierung prüfen. Bisherige Eingabe bleibt erhalten. |
 | Website-Inhalte fehlen | Wartezeit erhöhen und Scrollen prüfen. Login, Cookie-Banner und unendliches Nachladen werden nicht automatisch aufgelöst. |
@@ -611,6 +646,12 @@ Der Dienst bindet nur an die lokale Loopback-Adresse. Er ist nicht als öffentli
 
 Ergebnisse können je nach Website, Browser und lokalen Rechten variieren. In der eingeschränkten Entwicklungsumgebung konnten erfolgreiche echte Aufnahmen zuletzt nicht für alle Browser bestätigt werden. Prüfungen und Grenzen stehen im [PRUEFBERICHT.md](PRUEFBERICHT.md).
 
+## Lizenz
+
+WebScreenshotter einschließlich der eigenen Dokumentation steht unter der **Apache License, Version 2.0** (`Apache-2.0`). Der vollständige Lizenztext liegt in [LICENSE](LICENSE); die Kennung steht außerdem in `package.json` und `package-lock.json`. Die Lizenzdatei wird mit dem Windows-Paket weitergegeben.
+
+Mitgelieferte Laufzeiten, Bibliotheken und externe Prüfschemas behalten ihre jeweiligen Lizenzen und Hinweise. Die Projektlizenz ersetzt diese nicht. Einzelheiten stehen in [THIRD_PARTY.md](THIRD_PARTY.md) und bei den [Prüfschemas](test/schemas/README.md). Maßgeblich ist der [offizielle Apache-2.0-Lizenztext](https://www.apache.org/licenses/LICENSE-2.0.txt).
+
 ## Entwicklung und Git
 
 ### Projektstruktur
@@ -626,7 +667,7 @@ Ergebnisse können je nach Website, Browser und lokalen Rechten variieren. In de
 | `scripts/build-portable.js` | Windows-Paket aus geprüften lokalen Laufzeiten und Abhängigkeiten bauen. |
 | `docs/images/` | Schematische Abbildungen der Anleitung. |
 | `runtime/node/` | Portable Node.js-Laufzeit. |
-| `runtime/firefox/` | Optionaler Firefox für Headless-Tests. |
+| `LICENSE` | Apache-2.0-Lizenztext für WebScreenshotter. |
 | `node_modules/` | Projektabhängigkeiten. |
 | `data/` | Lokale Einstellungen. |
 | `dist/` | Windows-Paket und ZIP. |
@@ -659,13 +700,13 @@ Das erzeugt die sechs SVG-Abbildungen ohne zusätzliche Grafikbibliothek und die
 .\runtime\node\node.exe scripts/build-portable.js
 ```
 
-Benötigt werden geprüfte Laufzeiten, Lizenzen, `runtime/versions.json` und die gesperrten Projektabhängigkeiten. Node.js- und Firefox-Dateien werden anhand der hinterlegten SHA-256-Werte geprüft. Das Skript lädt nichts nach.
+Benötigt werden Node.js unter `runtime/node`, dessen Lizenzdatei, `runtime/versions.json` mit Version, Herkunft und `node.executableSha256` sowie die gesperrten Projektabhängigkeiten. Das Skript prüft `node.exe` anhand der hinterlegten SHA-256-Prüfsumme und lädt nichts nach. Es kopiert ausschließlich die benötigte Node.js-Laufzeit und schreibt einen entsprechend begrenzten Herkunftsnachweis ins Paket.
 
-Ein frischer Git-Checkout genügt für den Paketbau noch nicht: Die ausgeschlossenen Laufzeiten müssen ergänzt werden. Firefox und Playwright müssen zusammenpassen. Quellen und Lizenzen: [THIRD_PARTY.md](THIRD_PARTY.md).
+Ein frischer Git-Checkout genügt für den Paketbau noch nicht: Die ausgeschlossene Node.js-Laufzeit muss ergänzt werden. Lokale Browserprogramme und persönliche Konfigurationen werden nicht eingepackt. Quellen und Lizenzen: [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ### Git und Weitergabe
 
-Die `.gitignore` schließt `runtime/` und `runtimes/` einschließlich des portablen Firefox aus. Ebenfalls ausgeschlossen: `node_modules/`, `data/`, `aufnahmen/`, `.test-output/`, `dist/` und Logdateien.
+Die `.gitignore` schließt lokale Laufzeiten unter `runtime/` und `runtimes/` aus. Ebenfalls ausgeschlossen: persönliche `*.local.json`-Dateien, `node_modules/`, `data/`, `aufnahmen/`, `.test-output/`, `dist/` und Logdateien.
 
 Quellcode, README, HTML-Anleitung, Abbildungen und Paketdefinitionen werden versioniert. Das vollständige portable ZIP wird separat als Download bereitgestellt.
 

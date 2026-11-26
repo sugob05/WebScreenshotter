@@ -1,16 +1,14 @@
 import os from 'node:os';
 /** Locate installed browsers, validate explicit overrides and manage headless instances. */
 import path from 'node:path';
-import { stat, access } from 'node:fs/promises';
+import { stat, access, readFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { chromium, firefox } from 'playwright-core';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { InputError, string } from './validation.js';
 import { within } from './async.js';
-import { ROOT } from './config.js';
-
-export const BUNDLED_FIREFOX = path.join(ROOT, 'runtime', 'firefox', 'firefox.exe');
+import { DATA_DIR } from './config.js';
 
 const NAMES = {
   chrome: 'Google Chrome',
@@ -72,11 +70,7 @@ function candidates(id) {
       id === 'firefox' && process.env.LOCALAPPDATA
         ? [path.join(process.env.LOCALAPPDATA, 'Mozilla Firefox', 'firefox.exe')]
         : [];
-    return [
-      ...(id === 'firefox' ? [BUNDLED_FIREFOX] : []),
-      ...roots.map((root) => path.join(root, relative)),
-      ...localFirefox,
-    ];
+    return [...roots.map((root) => path.join(root, relative)), ...localFirefox];
   }
   if (process.platform === 'darwin') {
     const relative = {
@@ -118,13 +112,38 @@ async function executableExists(file) {
   }
 }
 
-/** Explicit paths take precedence. A bad override never silently selects another browser. */
-export async function detectBrowsers(settings = {}) {
+/** Machine-specific browser definitions stay in ignored data, outside releases.
+ * Missing definitions are normal; corrupt configuration must remain visible. */
+async function loadLocalBrowsers() {
+  try {
+    const definitions = JSON.parse(
+      await readFile(path.join(DATA_DIR, 'browsers.local.json'), 'utf8'),
+    );
+    if (!definitions || typeof definitions !== 'object' || Array.isArray(definitions))
+      throw new Error('Ein Objekt mit Browserkennungen wird erwartet.');
+    return definitions;
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    throw new InputError(`Lokale Browserkonfiguration ist nicht lesbar: ${error.message}`);
+  }
+}
+
+/** Explicit paths take precedence. A bad override never silently selects another browser.
+ * The optional definitions argument keeps tests independent of the current PC. */
+export async function detectBrowsers(settings = {}, localBrowsers) {
+  localBrowsers ??= await loadLocalBrowsers();
   return Promise.all(
     Object.entries(NAMES).map(async ([id, name]) => {
       const customPath = settings.browserPaths?.[id] || '';
+      const local = localBrowsers[id] || {};
+      const localPath =
+        typeof local.executablePath === 'string' && path.isAbsolute(local.executablePath)
+          ? local.executablePath
+          : '';
       let detectedPath = '';
-      for (const file of [...candidates(id), ...(await registryPaths(id))]) {
+      for (const file of [localPath, ...candidates(id), ...(await registryPaths(id))].filter(
+        Boolean,
+      )) {
         if (await executableExists(file)) {
           detectedPath = file;
           break;
@@ -132,12 +151,19 @@ export async function detectBrowsers(settings = {}) {
       }
       const executablePath = customPath || detectedPath;
       const exists = Boolean(executablePath) && (await executableExists(executablePath));
-      const bundled = id === 'firefox' && path.resolve(executablePath || '.') === BUNDLED_FIREFOX;
+      const usesLocalDefinition =
+        Boolean(localPath) && path.resolve(executablePath || '.') === path.resolve(localPath);
+      const protocol =
+        id === 'firefox'
+          ? usesLocalDefinition && local.protocol === 'playwright'
+            ? 'Playwright Firefox'
+            : 'WebDriver BiDi'
+          : 'CDP';
       return {
         id,
         name,
-        bundled,
-        protocol: id === 'firefox' ? (bundled ? 'Playwright Firefox' : 'WebDriver BiDi') : 'CDP',
+        autoSelect: !usesLocalDefinition || local.autoSelect !== false,
+        protocol,
         customPath,
         detectedPath,
         executablePath,
@@ -179,7 +205,7 @@ export async function launchBrowser(browser) {
     headless: true,
     timeout: 30000,
     ...(browser.id === 'firefox'
-      ? browser.bundled
+      ? browser.protocol === 'Playwright Firefox'
         ? {}
         : { channel: 'moz-firefox' }
       : { chromiumSandbox: true }),
