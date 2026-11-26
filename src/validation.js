@@ -80,6 +80,10 @@ export function filenameFor(config, index) {
 export function validateConfig(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw))
     throw new InputError('Ungültige Auftragsdaten.');
+  const retries = number(raw.retries, 'Wiederholungsversuche', 0, 20, 0, true);
+  const retryDelayMode = raw.retryDelayMode || 'fixed';
+  const fixedRetries = retries > 0 && retryDelayMode === 'fixed';
+  const randomRetries = retries > 0 && retryDelayMode === 'random';
   const config = {
     username: string(raw.username, 'Username', 200, true),
     collection: string(raw.collection, 'Name des Bestands', 500, true),
@@ -106,6 +110,29 @@ export function validateConfig(raw) {
     delayMax: number(raw.delayMax, 'Maximale Pause', 0, 86400, 5),
     settleTime: number(raw.settleTime, 'Wartezeit nach Seitenaufbau', 0, 120, 2),
     timeout: number(raw.timeout, 'Zeitlimit pro Seitenaufruf', 5, 300, 45),
+    retries,
+    retryDelayMode,
+    retryDelay: number(
+      fixedRetries ? raw.retryDelay : undefined,
+      'Wartezeit vor Wiederholung',
+      0,
+      86400,
+      5,
+    ),
+    retryDelayMin: number(
+      randomRetries ? raw.retryDelayMin : undefined,
+      'Minimale Wiederholungswartezeit',
+      0,
+      86400,
+      2,
+    ),
+    retryDelayMax: number(
+      randomRetries ? raw.retryDelayMax : undefined,
+      'Maximale Wiederholungswartezeit',
+      0,
+      86400,
+      10,
+    ),
   };
   if (!['urls', 'sitemap'].includes(config.inputMode))
     throw new InputError('Unbekannte Eingabeart.');
@@ -120,6 +147,12 @@ export function validateConfig(raw) {
     throw new InputError('Unbekannte Pausenart.');
   if (config.delayMode === 'random' && config.delayMax < config.delayMin)
     throw new InputError('Die maximale Pause muss mindestens so groß wie die minimale Pause sein.');
+  if (!['fixed', 'random'].includes(config.retryDelayMode))
+    throw new InputError('Unbekannte Wartezeitart für Wiederholungsversuche.');
+  if (config.retryDelayMode === 'random' && config.retryDelayMax < config.retryDelayMin)
+    throw new InputError(
+      'Die maximale Wiederholungswartezeit muss mindestens so groß wie die minimale sein.',
+    );
   if (!path.isAbsolute(config.outputDir))
     throw new InputError('Bitte einen absoluten Pfad für den Zielordner angeben.');
   config.outputDir = path.resolve(config.outputDir);

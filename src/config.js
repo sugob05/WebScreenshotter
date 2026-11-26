@@ -11,7 +11,7 @@ export const DATA_DIR = path.resolve(
     path.join(ROOT, 'data'),
 );
 export const APPLICATION_NAME = 'WebScreenshotter';
-export const VERSION = '1.2.3';
+export const VERSION = '1.3.0';
 export const DC_TERMS = [
   'title',
   'creator',

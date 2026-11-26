@@ -71,3 +71,42 @@ test('Sitemap-Konfiguration und wiederholte Dublin-Core-Felder', () => {
   assert.equal(config.urls, undefined);
   assert.equal(config.metadata.length, 2);
 });
+
+test('Retry-Konfiguration validiert Anzahl, aktive Wartezeiten und Zufallsgrenzen', () => {
+  assert.equal(validateConfig(base).retries, 0);
+  for (const patch of [
+    { retries: -1 },
+    { retries: 1.5 },
+    { retries: 21 },
+    { retries: null },
+    { retries: 1, retryDelay: -1 },
+    { retries: 1, retryDelay: null },
+    { retries: 1, retryDelay: 86401 },
+    { retryDelayMode: 'invalid' },
+    { retries: 1, retryDelayMode: 'random', retryDelayMin: 8, retryDelayMax: 2 },
+    { retries: 1, retryDelayMode: 'random', retryDelayMax: 'NaN' },
+  ])
+    assert.throws(() => validateConfig({ ...base, ...patch }), JSON.stringify(patch));
+  const random = validateConfig({
+    ...base,
+    retries: 2,
+    retryDelayMode: 'random',
+    retryDelayMin: 0.5,
+    retryDelayMax: 3,
+  });
+  assert.equal(random.retries, 2);
+  assert.equal(random.retryDelayMin, 0.5);
+  assert.equal(random.retryDelayMax, 3);
+  assert.doesNotThrow(() =>
+    validateConfig({
+      ...base,
+      retries: 0,
+      retryDelayMode: 'random',
+      retryDelayMin: 10,
+      retryDelayMax: 1,
+    }),
+  );
+  assert.doesNotThrow(() =>
+    validateConfig({ ...base, retries: 1, retryDelay: 0, retryDelayMin: -1 }),
+  );
+});

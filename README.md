@@ -4,7 +4,7 @@
 
 WebScreenshotter nimmt Websites automatisch auf und speichert die Bilder mit nachvollziehbaren Metadaten. Die Oberfläche läuft lokal im Windows-Standardbrowser. Ein JavaScript-Dienst unter Node.js steuert den Aufnahme-Browser im Hintergrund und schreibt die Dateien auf den PC.
 
-**Version 1.2.3 · Dokumentationsstand: 25. November 2026**
+**Version 1.3.0 · Dokumentationsstand: 26. November 2026**
 
 **Node.js ab Version 22 ist erforderlich.** Im vollständigen Windows-Paket ist Node.js bereits enthalten. Beim Bezug des Quellcodes aus Git müssen die Laufzeit und die Projektabhängigkeiten ergänzt werden. Python ist für die heutige Anwendung nicht erforderlich.
 
@@ -51,6 +51,7 @@ Die heutige Anwendung benötigt kein Python. **Node.js bleibt erforderlich**, we
 - Headless-Aufnahmen mit Chrome/Chromium, Microsoft Edge oder Firefox.
 - Einstellbare Fenstergröße, ganze Seiten oder sichtbarer Ausschnitt und automatisches Scrollen.
 - Feste oder zufällige Pausen, zusätzliche Ladezeit und Zeitlimit pro Seite.
+- Einstellbare Wiederholungsversuche mit eigenen festen oder zufälligen Wartezeiten und vollständiger Dokumentation jedes Versuchs.
 - Ausgabe als PNG, JPG, TIF oder PDF.
 - Bei PDF entweder einzelne Dateien pro URL oder ausschließlich eine gemeinsame `gesamt.pdf`.
 - Zielordner und Dateinamen mit Präfix, Laufnummer, führenden Nullen und Suffix.
@@ -354,6 +355,25 @@ Aufnahmen verwenden isolierte Profile. Persönliche Cookies, Anmeldungen und Erw
 
 Die Pause zwischen Aufnahmen beginnt **nach Abschluss der vorherigen Aufnahme**. Sie ist von der zusätzlichen Wartezeit nach dem Laden einer Seite getrennt. Feste und zufällige Pausen dürfen 0–86.400 Sekunden betragen.
 
+### Fehlgeschlagene Aufnahmen wiederholen
+
+Unter **Aufnahme konfigurieren → Weitere Aufnahmeoptionen** stehen die **Wiederholungsversuche (Retries)**.
+
+1. Die Zahl der zusätzlichen Versuche einstellen: **0** deaktiviert Wiederholungen und ist die Voreinstellung. **2** erlaubt den ersten Versuch und höchstens zwei Wiederholungen, insgesamt also drei Versuche pro URL.
+2. Bei einer Anzahl größer als 0 unter **Wartezeit zwischen Wiederholungen** entweder **Fester Zeitraum** oder **Zufälliger Zeitraum** wählen.
+3. Eine feste Wartezeit in Sekunden oder die Werte **Mindestens** und **Höchstens** eingeben. Für jede Wiederholung wird ein neuer Zufallswert innerhalb dieser Grenzen gewählt.
+4. Den Auftrag starten. Der Status zeigt den aktuellen Versuch und bei einer Wiederholung den Countdown an.
+
+Erlaubt sind 0–20 zusätzliche Versuche und Wartezeiten von 0–86.400 Sekunden. Die feste Retry-Wartezeit beträgt zunächst 5 Sekunden; für die zufällige Wartezeit sind 2–10 Sekunden voreingestellt. Diese Zeiten sind unabhängig von der Pause zwischen unterschiedlichen URLs.
+
+Wiederholt werden fehlgeschlagene Aufnahmen, Netzwerkfehler und Antworten des aufgerufenen Hauptdokuments mit HTTP-Status 4xx/5xx. Ein erfolgreicher Versuch beendet die Wiederholungen sofort. Hinweise wie das Erreichen des Scroll-Limits lösen allein keine Wiederholung aus. Benutzerabbruch und ein abgestürzter Aufnahme-Browser beenden den Ablauf; ein abgestürzter Browser wird nicht automatisch neu gestartet.
+
+Zwischengeschaltete HTTP-Fehlerseiten erzeugen keine zusätzlichen Bilddateien. Ist auch der letzte Versuch eine HTTP-Fehlerseite, wird sie nach Möglichkeit als Aufnahme mit Warnung erhalten. Bei 0 Retries bleibt damit das bisherige Verhalten erhalten. Reine Aufnahme- oder Netzwerkfehler ohne gespeichertes Bild bleiben als fehlgeschlagenes Ergebnis dokumentiert.
+
+**Jeder Versuch wird protokolliert**, auch wenn eine spätere Wiederholung erfolgreich ist: mit URL, Versuchsnummer, Zeitpunkten, Ergebnis, Fehlertext und letztem verfügbarem HTTP-Status. Gibt es keine Serverantwort, lautet der Status im Manifest und JSON-Protokoll ausdrücklich `null`; die Oberfläche meldet den fehlenden Status. Es wird kein HTTP-Code erfunden. Beispielsweise kann ein Screenshotfehler nach einer erfolgreichen Serverantwort trotzdem HTTP 200 besitzen.
+
+`protokoll.jsonl` enthält je Versuch einen Datensatz vom Typ `capture-attempt`, das Manifest bewahrt die Historie in `records[].attempts`, und METS enthält pro Versuch ein eigenes PREMIS-Ereignis. Fehlversuche werden bereits vor der Retry-Wartezeit gesichert. Dateinamen, Laufnummern, Gesamt-PDF und Excel behalten einen Ergebniseintrag pro URL; Excel zeigt den abschließenden Versuch bzw. die erhaltene Datei.
+
 ## Ablage und Dateinamen
 
 Der **Zielordner** ist der übergeordnete Speicherort. Jeder Auftrag erhält einen neuen Unterordner mit Bestandsname, Zeitstempel und eindeutiger Kennung. Vorhandene Aufnahmen werden nicht überschrieben.
@@ -411,7 +431,7 @@ Unten erscheinen Status, aktuelle URL, Fortschritt, Wartepausen, Meldungen und E
 
 - HTTP 200 bedeutet normalerweise eine erfolgreiche Auslieferung.
 - Bei HTTP 4xx/5xx wird die dargestellte Antwortseite nach Möglichkeit aufgenommen und als Warnung dokumentiert.
-- Ein Netzwerk- oder Aufnahmefehler wird dokumentiert; danach folgt normalerweise die nächste URL.
+- Ein Netzwerk- oder Aufnahmefehler wird dokumentiert; aktivierte Wiederholungen werden vor dem Wechsel zur nächsten URL durchgeführt.
 - Ein erkannter Browserabsturz beendet den Auftrag und speichert den vorhandenen Zwischenstand.
 
 **Auftrag abbrechen** stoppt den Auftrag. Bereits gespeicherte Bilder bleiben erhalten. Den Dienst während des abschließenden Schreibens der Metadaten bzw. der PDF-Zusammenführung weiterlaufen lassen.
@@ -465,6 +485,8 @@ Für einzelne Aufnahmen werden unter anderem Seitentitel, Quell-URL, Zeitpunkt, 
 ### PREMIS 3.0
 
 PREMIS dokumentiert Versuche und Dateien: angefragte und endgültige URL, UTC-Zeitpunkte, Titel, HTTP-Status, ausgewählte Antwortheader, Aufnahmeparameter, Browserversion, User-Agent, Größe, SHA-256 und Fehlerangaben.
+
+Bei Wiederholungen bleiben alle Versuche als getrennte Ereignisse mit eigener Kennung und Versuchsnummer erhalten. Die Datei und ihr METS-Struktureintrag verweisen auch auf die früheren Fehlversuche. Nur tatsächlich gespeicherte Bilder erhalten ein Dateiobjekt.
 
 Ein fehlgeschlagener Versuch erhält ein Ereignis, aber keine erfundene Bilddatei. Bei der Gesamt-PDF wird die Ableitung aus Einzelteilen dokumentiert. Historische PREMIS-Angaben zu diesen Teilen bedeuten nicht, dass sie nach erfolgreicher Zusammenführung noch vorhanden sind.
 
@@ -577,6 +599,7 @@ Der Dienst bindet nur an die lokale Loopback-Adresse. Er ist nicht als öffentli
 | URLs | 10.000 eindeutige URLs pro Auftrag. |
 | TXT-Import | Zusammen 2 MiB pro Import. |
 | Zusatzmetadaten | 100 Felder. |
+| Wiederholungsversuche | 0–20 zusätzliche Versuche pro URL; 0 = ausgeschaltet. |
 | Sitemaps | 100 Dateien, acht Ebenen, jeweils 10 MiB. |
 | Einzelbilder | 80 Megapixel und 60.000 Pixel Höhe. |
 | Automatisches Scrollen | Höchstens 50 Schritte bzw. etwa 15 Sekunden. |

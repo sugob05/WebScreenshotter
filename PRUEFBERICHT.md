@@ -1,4 +1,13 @@
-# WebScreenshotter 1.2.3 – Prüfstand vom 25. November 2026
+# WebScreenshotter 1.3.0 – Prüfstand vom 26. November 2026
+
+## Ergänzungen in Version 1.3.0
+
+- Konfigurierbare Retries unter „Weitere Aufnahmeoptionen“: 0–20 zusätzliche Versuche, feste oder zufällige Wartezeiten, standardmäßig ausgeschaltet.
+- Separate Protokoll- und PREMIS-Ereignisse für alle tatsächlichen Versuche, einschließlich HTTP-Status bzw. ausdrücklich fehlender Serverantwort; Sicherung bereits vor einer Retry-Pause.
+- Fortschritt, Dateinamen, Excel und Gesamt-PDF bleiben auf ein Ergebnis pro URL bezogen. Abbruch während einer Retry-Pause erhält die bisherigen Fehlversuche.
+- **47 von 47 automatisierten Tests bestanden**, keine übersprungenen Tests. Die Retry-Prüfungen umfassen Fehler mit anschließendem Erfolg, ausgeschöpfte Versuche, feste und zufällige Pausen, fehlende Serverantwort, Screenshotfehler nach HTTP 200, späte Navigation auf eine Fehlerseite, Abbruch, Browserabsturz, bestehende Dateien und Gesamt-PDF.
+- METS 2.0 und PREMIS 3.0 bestehen die offiziellen XSD-Prüfungen auch mit mehreren Ereignissen pro URL. JavaScript-Syntax und Dokumentationsverweise geprüft: 55 eindeutige HTML-Anker, 13 lokale Dateiverweise und sechs gültige SVG-Dateien.
+- Die neuen Retry-Tests verwenden synthetische Browserantworten. Echte Website-Aufnahmen und die visuelle Bedienung der neuen Felder wurden für diese Version nicht erneut im Browser geprüft.
 
 ## Ergänzungen in Version 1.2.3
 

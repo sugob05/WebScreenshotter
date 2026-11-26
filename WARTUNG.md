@@ -29,7 +29,11 @@ Die Oberfläche wird über die Betriebssystem-Zuordnung für HTTP-Adressen im St
 
 ## Daten und Ablauf
 
-Ein Auftrag enthält seine geprüfte `config`, URLs in Eingabereihenfolge sowie `records`. Jeder Abrufversuch erzeugt genau einen Record, auch bei Fehlern. `sequence` ist die eingestellte Laufnummer. `filename`, `bytes` und `sha256` werden erst nach erfolgreichem Speichern vergeben.
+Ein Auftrag enthält seine geprüfte `config`, URLs in Eingabereihenfolge sowie `records`. Jede bearbeitete URL erzeugt genau einen abschließenden Record, auch bei Fehlern. `sequence` ist die eingestellte Laufnummer. `filename`, `bytes` und `sha256` werden erst nach erfolgreichem Speichern vergeben.
+
+Ab Version 1.3.0 enthält `records` genau ein abschließendes Ergebnis pro URL. Die obersten Ergebnisfelder beschreiben den letzten Versuch; `attempts` bewahrt alle tatsächlichen Versuche mit separaten Ereigniskennungen und `attemptCount` deren Anzahl. Während einer Retry-Pause liegt der aktuelle URL-Datensatz in `job.currentRecord`; `persist()` nimmt ihn mit `pending: true` in Manifest und METS auf, während die URL noch in `remainingUrls` steht. Der Fortschrittszähler steigt erst nach Ende der Wiederholungsfolge. Ein Abbruch während der Pause erhält den letzten tatsächlichen Versuch mit `retryInterrupted: true`, ohne einen weiteren Abruf zu erfinden.
+
+`retries` zählt zusätzliche Versuche (0–20). `retryDelayMode`, `retryDelay`, `retryDelayMin` und `retryDelayMax` steuern ausschließlich die Retry-Pause. HTTP-Fehlerseiten werden vor einem weiteren Versuch ohne Bilddatei dokumentiert; die letzte erreichbare HTTP-Fehlerseite bleibt als Warnungsaufnahme erhalten. `capture-attempt`-Protokolleinträge enthalten einen numerischen HTTP-Status oder `null`, falls keine Antwort vorliegt. METS verknüpft alle PREMIS-Ereignisse mit der einen URL-Struktur, Excel und Gesamt-PDF verwenden weiterhin nur das erhaltene Ergebnis. Geschlossene Versuche ignorieren verspätete Response-Ereignisse.
 
 Der Ablauf ist `preparing` → `running`/`waiting` → `finalizing` → `completed`, `cancelled` oder `failed`. `JobManager.run()` übernimmt den Abschluss auch bei Ausnahmen. Browserabsturz und Benutzerabbruch haben unterschiedliche Ergebnisse. Testbrowser und PDF-Zusammenführung können am Konstruktor des JobManagers ersetzt werden, ohne die Produktionsimplementierung umzuschreiben.
 

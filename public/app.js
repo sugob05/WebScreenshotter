@@ -135,9 +135,15 @@ function configFromForm() {
     'delayMax',
     'settleTime',
     'timeout',
+    'retries',
+    'retryDelay',
+    'retryDelayMin',
+    'retryDelayMax',
   ])
     data[name] = Number(captureField(name).value);
   data.fullPage = captureField('fullPage').checked;
+  // Disabled retry fields still belong to the saved draft and configuration.
+  data.retryDelayMode = captureField('retryDelayMode').value;
   data.lazyLoad = captureField('lazyLoad').checked;
   data.combinePdf = captureField('format').value === 'pdf' && captureField('combinePdf').checked;
   data.metadata = readMetadataFields();
@@ -321,6 +327,22 @@ function updateControls() {
       ? 'Die maximale Pause muss mindestens so groß wie die minimale Pause sein.'
       : '',
   );
+  const retriesEnabled = Number(captureField('retries').value) > 0;
+  const randomRetry = captureField('retryDelayMode').value === 'random';
+  queryElement('#retry-options').hidden = !retriesEnabled;
+  queryElement('#retry-options').disabled = !retriesEnabled;
+  queryElement('#fixed-retry-delay').hidden = randomRetry;
+  queryElement('#random-retry-delay').hidden = !randomRetry;
+  captureField('retryDelay').disabled = !retriesEnabled || randomRetry;
+  captureField('retryDelayMin').disabled = !retriesEnabled || !randomRetry;
+  captureField('retryDelayMax').disabled = !retriesEnabled || !randomRetry;
+  captureField('retryDelayMax').setCustomValidity(
+    retriesEnabled &&
+      randomRetry &&
+      Number(captureField('retryDelayMax').value) < Number(captureField('retryDelayMin').value)
+      ? 'Die maximale Wiederholungswartezeit muss mindestens so groß wie die minimale sein.'
+      : '',
+  );
   captureField('lazyLoad').disabled = !captureField('fullPage').checked;
   const format = captureField('format').value;
   queryElement('#pdf-options').hidden = format !== 'pdf';
@@ -493,10 +515,13 @@ function excelExportButton(job, links) {
 
 function renderJob(job) {
   // Announce milestones only. The half-second countdown must not flood speech.
-  const announcementKey = `${job.id}:${job.status}:${job.processed}`;
+  const announcementKey = `${job.id}:${job.status}:${job.processed}:${job.currentAttempt}`;
   if (announcementKey !== lastAnnouncement) {
     queryElement('#job-announcement').textContent =
       `${JOB_STATUS_LABELS[job.status] || job.status}. ${job.processed} von ${job.total} bearbeitet, ${job.succeeded} gespeichert, ${job.failed} Fehler.`;
+    if (job.currentAttempt > 1)
+      queryElement('#job-announcement').textContent +=
+        ` Wiederholung ${job.currentAttempt - 1} von ${job.maxAttempts - 1}.`;
     lastAnnouncement = announcementKey;
   }
   currentJob = job;
@@ -521,7 +546,9 @@ function renderJob(job) {
       : `${JOB_STATUS_LABELS[job.status] || job.status} · ${job.collection}`;
   queryElement('#progress-detail').textContent = finished
     ? `${job.succeeded} gespeichert · ${job.total - processed} noch nicht bearbeitet`
-    : job.currentUrl || 'Auftrag wird vorbereitet …';
+    : job.currentUrl
+      ? `${job.currentUrl}${job.currentAttempt ? ` · Versuch ${job.currentAttempt} von ${job.maxAttempts}` : ''}`
+      : 'Auftrag wird vorbereitet …';
   if (job.status === 'waiting') updateCountdown();
   const log = queryElement('#log');
   const follow = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
@@ -600,6 +627,10 @@ function renderJob(job) {
       if (record.error) source.append(createElement('small', '', record.error));
       if (record.warnings?.length)
         source.append(createElement('small', '', record.warnings.join(' ')));
+      if (record.attemptCount > 1)
+        source.append(createElement('small', '', `${record.attemptCount} Versuche dokumentiert.`));
+      if (record.retryInterrupted)
+        source.append(createElement('small', '', 'Weitere Wiederholungen wurden beendet.'));
       row.append(
         createElement('td', '', String(record.sequence)),
         source,
@@ -607,12 +638,14 @@ function renderJob(job) {
         createElement(
           'td',
           '',
-          {
-            success: 'Gespeichert',
-            warning: 'Warnung',
-            failure: 'Fehler',
-            cancelled: 'Abgebrochen',
-          }[record.outcome] || record.outcome,
+          record.pending
+            ? 'Wiederholung läuft'
+            : {
+                success: 'Gespeichert',
+                warning: 'Warnung',
+                failure: 'Fehler',
+                cancelled: 'Abgebrochen',
+              }[record.outcome] || record.outcome,
         ),
       );
       return row;
@@ -625,7 +658,9 @@ function updateCountdown() {
   if (currentJob?.status !== 'waiting' || !currentJob.nextAt) return;
   const remaining = Math.max(0, Math.ceil((Date.parse(currentJob.nextAt) - Date.now()) / 1000));
   queryElement('#progress-detail').textContent =
-    `Nächster Seitenaufruf in ${remaining.toLocaleString('de-DE')} Sekunden.`;
+    currentJob.waitReason === 'retry'
+      ? `Wiederholung ${currentJob.currentAttempt - 1} von ${currentJob.maxAttempts - 1} in ${remaining.toLocaleString('de-DE')} Sekunden.`
+      : `Nächster Seitenaufruf in ${remaining.toLocaleString('de-DE')} Sekunden.`;
 }
 setInterval(updateCountdown, 500);
 

@@ -5,7 +5,7 @@
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import os from 'node:os';
-import { mkdir, writeFile, appendFile, unlink, rmdir } from 'node:fs/promises';
+import { mkdir, open, appendFile, unlink, rmdir } from 'node:fs/promises';
 import { randomUUID, createHash } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { atomicWrite, APPLICATION_NAME, VERSION } from './config.js';
@@ -40,6 +40,27 @@ export function delaySeconds(config, random = Math.random) {
     : config.delay;
 }
 
+/** Retry pauses are independent of the ordinary pause between different URLs. */
+export function retryDelaySeconds(config, random = Math.random) {
+  return config.retryDelayMode === 'random'
+    ? config.retryDelayMin + random() * (config.retryDelayMax - config.retryDelayMin)
+    : (config.retryDelay ?? 5);
+}
+
+/** Only remove files this attempt created. A failed write must not leave a
+ * partial file that blocks the next attempt, nor overwrite an existing file. */
+async function writeCaptureFile(filename, data) {
+  const handle = await open(filename, 'wx');
+  try {
+    await handle.writeFile(data);
+    await handle.close();
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await unlink(filename).catch(() => {});
+    throw error;
+  }
+}
+
 export class JobManager extends EventEmitter {
   constructor({
     checkUrl = () => {},
@@ -57,6 +78,7 @@ export class JobManager extends EventEmitter {
 
   /** Keep event-stream messages bounded; exports always use full job.records. */
   snapshot(job) {
+    const records = job.currentRecord ? [...job.records, job.currentRecord] : job.records;
     return {
       id: job.id,
       status: job.status,
@@ -72,6 +94,9 @@ export class JobManager extends EventEmitter {
       cancelledCount: job.records.filter((record) => record.outcome === 'cancelled').length,
       currentUrl: job.currentUrl,
       nextAt: job.nextAt,
+      waitReason: job.waitReason || null,
+      currentAttempt: job.currentAttempt || null,
+      maxAttempts: (job.config.retries || 0) + 1,
       outputDir: job.outputDir,
       browserInfo: job.browserInfo,
       error: job.error,
@@ -88,7 +113,7 @@ export class JobManager extends EventEmitter {
       cleanupWarning: job.cleanupWarning || null,
       logError: job.logError,
       logs: job.logs.slice(-200),
-      records: job.records
+      records: records
         .slice(-500)
         .map(
           ({
@@ -103,6 +128,9 @@ export class JobManager extends EventEmitter {
             warnings,
             temporaryPdf,
             pdfPages,
+            attemptCount,
+            pending,
+            retryInterrupted,
           }) => ({
             sequence,
             requestedUrl,
@@ -115,6 +143,9 @@ export class JobManager extends EventEmitter {
             warnings,
             temporaryPdf,
             pdfPages,
+            attemptCount,
+            pending,
+            retryInterrupted,
             filePath: outputArtifact(job, { filename, temporaryPdf })?.relativePath || null,
           }),
         ),
@@ -125,8 +156,8 @@ export class JobManager extends EventEmitter {
     this.emit('change', this.snapshot(job));
   }
 
-  log(job, message, level = 'info') {
-    const entry = { time: currentTimestamp(), level, message };
+  log(job, message, level = 'info', details = {}) {
+    const entry = { time: currentTimestamp(), level, message, ...details };
     job.logs.push(entry);
     if (job.logs.length > 1000) job.logs.shift();
     job.logPromise = job.logPromise
@@ -196,6 +227,9 @@ export class JobManager extends EventEmitter {
 
   /** Each artifact is atomically replaced; no half-written XML/JSON is published. */
   async persist(job) {
+    // Failed attempts must already be recoverable while a retry is waiting.
+    // The active URL remains in remainingUrls until its retry sequence ends.
+    const records = job.currentRecord ? [...job.records, job.currentRecord] : job.records;
     const manifest = {
       application: { name: APPLICATION_NAME, version: VERSION },
       metadataStandards: { mets: '2.0', premis: '3.0', dublinCore: '1.1' },
@@ -208,14 +242,18 @@ export class JobManager extends EventEmitter {
       browser: job.browserInfo || null,
       sitemapSources: job.sources,
       urls: job.urls,
-      records: job.records,
+      records,
       remainingUrls: job.urls.slice(job.records.length),
+      currentUrl: job.currentUrl || null,
+      currentAttempt: job.currentAttempt || null,
+      nextAt: job.nextAt || null,
+      waitReason: job.waitReason || null,
       combinedPdf: job.combinedPdf || null,
       combinedPdfError: job.combinedPdfError || null,
       cleanupWarning: job.cleanupWarning || null,
     };
     await atomicWrite(path.join(job.outputDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
-    await atomicWrite(path.join(job.outputDir, 'mets.xml'), buildMets(job));
+    await atomicWrite(path.join(job.outputDir, 'mets.xml'), buildMets({ ...job, records }));
     const checksums = job.records
       .filter((record) => record.filename && !(record.temporaryPdf && job.combinedPdf))
       .map((record) => `${record.sha256}  ${sourceFilePath(record)}`);
@@ -317,6 +355,8 @@ export class JobManager extends EventEmitter {
       };
       for (let index = 0; index < job.urls.length; index++) {
         captureSignal.throwIfAborted();
+        job.currentAttempt = null;
+        job.waitReason = 'page';
         const pause = index === 0 ? 0 : delaySeconds(job.config);
         if (pause > 0) {
           job.status = 'waiting';
@@ -325,23 +365,15 @@ export class JobManager extends EventEmitter {
           await sleep(pause * 1000, undefined, { signal: captureSignal });
         }
         job.nextAt = null;
+        job.waitReason = null;
         job.status = 'running';
         job.currentUrl = job.urls[index];
         this.log(job, `[${index + 1}/${job.urls.length}] ${job.currentUrl}`);
-        const record = await this.capture(job, index, pause);
+        const record = await this.captureWithRetries(job, index, pause, captureSignal);
         job.records.push(record);
-        this.log(
-          job,
-          record.filename
-            ? `${record.filename} gespeichert · HTTP ${record.httpStatus ?? 'unbekannt'}${record.warnings.length ? ` · ${record.warnings.join(' ')}` : ''}`
-            : `Aufnahme ${record.sequence}: ${record.error}`,
-          record.outcome === 'success'
-            ? 'success'
-            : record.outcome === 'failure'
-              ? 'error'
-              : 'warning',
-        );
+        job.currentRecord = null;
         await this.persist(job);
+        this.notify(job);
         if (job.browserError) throw new Error(job.browserError);
       }
       captureSignal.throwIfAborted();
@@ -358,6 +390,12 @@ export class JobManager extends EventEmitter {
         signal.aborted ? 'warning' : 'error',
       );
     } finally {
+      // Cancellation or browser failure during a retry pause does not invent
+      // another capture event. Keep the last actual attempt and its history.
+      if (job.currentRecord) {
+        job.records.push({ ...job.currentRecord, pending: false, retryInterrupted: true });
+        job.currentRecord = null;
+      }
       job.releaseBrowserWatch?.();
       if (job.instance) {
         try {
@@ -373,6 +411,8 @@ export class JobManager extends EventEmitter {
       job.instance = null;
       job.currentUrl = null;
       job.nextAt = null;
+      job.waitReason = null;
+      job.currentAttempt = null;
       if (job.config.format === 'pdf' && job.config.combinePdf) {
         job.status = 'finalizing';
         job.pdfController = new AbortController();
@@ -441,10 +481,87 @@ export class JobManager extends EventEmitter {
     }
   }
 
-  /** One URL produces one record, even if navigation, rendering or writing fails.
-   * File fields are assigned only after the screenshot has reached disk. */
-  async capture(job, index, pause) {
+  /** One final record per URL, with a distinct immutable record for every try.
+   * Intermediate HTTP error pages are retried before writing any image. The
+   * last HTTP response is still captured as a warning, including with retries=0. */
+  async captureWithRetries(job, index, initialPause, signal) {
+    const attempts = [];
+    const maxAttempts = (job.config.retries || 0) + 1;
+    let pause = initialPause;
+    for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber++) {
+      job.status = 'running';
+      job.nextAt = null;
+      job.waitReason = null;
+      job.currentAttempt = attemptNumber;
+      this.notify(job);
+      const attempt = await this.capture(job, index, pause, attemptNumber);
+      attempts.push(attempt);
+      const record = { ...attempt, attempts: [...attempts], attemptCount: attempts.length };
+      const retryable = attempt.outcome === 'failure' || attempt.httpStatus >= 400;
+      const retryAllowed = retryable && attemptNumber < maxAttempts;
+      job.currentRecord = { ...record, pending: retryAllowed && !signal.aborted };
+      const status =
+        attempt.httpStatus === null
+          ? 'kein HTTP-Status (keine Serverantwort)'
+          : `HTTP ${attempt.httpStatus}`;
+      const outcome = attempt.filename
+        ? `${attempt.filename} gespeichert${attempt.warnings.length ? ` · ${attempt.warnings.join(' ')}` : ''}`
+        : attempt.error;
+      this.log(
+        job,
+        `Aufnahme ${attempt.sequence}, Versuch ${attemptNumber}/${maxAttempts}: ${status} · ${outcome}`,
+        attempt.outcome === 'success'
+          ? 'success'
+          : attempt.outcome === 'failure'
+            ? 'error'
+            : 'warning',
+        {
+          type: 'capture-attempt',
+          sequence: attempt.sequence,
+          attemptNumber,
+          eventId: attempt.eventId,
+          requestedUrl: attempt.requestedUrl,
+          finalUrl: attempt.finalUrl || null,
+          responseUrl: attempt.responseUrl || null,
+          httpStatus: attempt.httpStatus,
+          httpStatusText: attempt.httpStatusText || null,
+          outcome: attempt.outcome,
+          error: attempt.error || null,
+          startedAt: attempt.startedAt,
+          finishedAt: attempt.finishedAt,
+        },
+      );
+      if (!retryAllowed || signal.aborted || job.browserError) return record;
+
+      pause = retryDelaySeconds(job.config);
+      job.status = 'waiting';
+      job.waitReason = 'retry';
+      job.currentAttempt = attemptNumber + 1;
+      job.nextAt = new Date(Date.now() + pause * 1000).toISOString();
+      this.log(
+        job,
+        `Wiederholung ${attemptNumber}/${maxAttempts - 1} für ${attempt.requestedUrl} in ${pause.toFixed(2)} Sekunden.`,
+        'warning',
+        {
+          type: 'retry-scheduled',
+          sequence: attempt.sequence,
+          nextAttempt: attemptNumber + 1,
+          delaySeconds: pause,
+        },
+      );
+      await this.persist(job);
+      await job.logPromise;
+      // Persist and cancellation also work for a configured wait of zero.
+      signal.throwIfAborted();
+      if (pause > 0) await sleep(pause * 1000, undefined, { signal });
+    }
+  }
+
+  /** Capture exactly one attempt. File fields are set only after a complete
+   * write; a fresh page and response state isolate it from preceding attempts. */
+  async capture(job, index, pause, attemptNumber = 1) {
     const { config, instance } = job;
+    const hasAnotherAttempt = attemptNumber <= (config.retries || 0);
     const userSignal = job.controller.signal;
     const signal = job.browserController
       ? AbortSignal.any([userSignal, job.browserController.signal])
@@ -455,7 +572,10 @@ export class JobManager extends EventEmitter {
       startedAt: currentTimestamp(),
       eventId: randomUUID(),
       objectId: randomUUID(),
+      attemptNumber,
+      httpStatus: null,
       delayBeforeSeconds: pause,
+      delayKind: attemptNumber > 1 ? 'retry' : 'page',
       outcome: 'failure',
       warnings: [],
       browser: job.browserInfo,
@@ -469,6 +589,7 @@ export class JobManager extends EventEmitter {
         signal,
       );
     const recordResponse = (response) => {
+      if (record.finishedAt) return;
       if (!response.request().isNavigationRequest() || response.frame() !== page.mainFrame())
         return;
       record.httpStatus = response.status();
@@ -511,6 +632,8 @@ export class JobManager extends EventEmitter {
           timeout: config.timeout * 1000,
         }),
       );
+      if (record.httpStatus >= 400 && hasAnotherAttempt)
+        throw new Error(`HTTP ${record.httpStatus}: Seitenabruf fehlgeschlagen.`);
       if (config.settleTime) await sleep(config.settleTime * 1000, undefined, { signal });
       // Trigger ordinary lazy-loaded content while bounding infinite scroll pages.
       if (config.lazyLoad && config.fullPage) {
@@ -574,6 +697,12 @@ export class JobManager extends EventEmitter {
           ),
         ),
       );
+      // Scripts can navigate again while the page settles or the image is taken.
+      // Freeze the response metadata with the image before asynchronous encoding
+      // and writing; a late HTTP error must not leave a file blocking its retry.
+      page.off?.('response', recordResponse);
+      if (record.httpStatus >= 400 && hasAnotherAttempt)
+        throw new Error(`HTTP ${record.httpStatus}: Seitenabruf fehlgeschlagen.`);
       record.imageWidth = config.format === 'jpg' ? dimensions.width : image.readUInt32BE(16);
       record.imageHeight = config.format === 'jpg' ? dimensions.height : image.readUInt32BE(20);
       const data =
@@ -587,14 +716,14 @@ export class JobManager extends EventEmitter {
       const filename = filenameFor(config, index);
       const temporaryPdf = config.format === 'pdf' && config.combinePdf;
       const directory = temporaryPdf ? PDF_PARTS_DIRECTORY : 'screenshots';
-      await writeFile(path.join(job.outputDir, directory, filename), data, { flag: 'wx' });
+      await writeCaptureFile(path.join(job.outputDir, directory, filename), data);
       record.filename = filename;
       if (temporaryPdf) record.temporaryPdf = true;
       record.bytes = data.length;
       record.sha256 = createHash('sha256').update(data).digest('hex');
       if (record.httpStatus >= 400)
         record.warnings.push(`HTTP ${record.httpStatus}: Fehlerseite aufgenommen.`);
-      if (record.httpStatus === undefined)
+      if (record.httpStatus === null)
         record.warnings.push('Kein HTTP-Status des Hauptdokuments verfügbar.');
       record.outcome = record.warnings.length ? 'warning' : 'success';
     } catch (error) {
@@ -605,6 +734,7 @@ export class JobManager extends EventEmitter {
         record.title ||= await within(page.title(), 2000, 'Titel nicht verfügbar.').catch(() => '');
       }
     } finally {
+      page?.off?.('response', recordResponse);
       if (page && !page.isClosed())
         await within(page.close(), 3000, 'Seite konnte nicht geschlossen werden.').catch(() => {});
       record.finishedAt = currentTimestamp();

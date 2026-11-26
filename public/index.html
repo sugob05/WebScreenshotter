@@ -374,6 +374,93 @@
                         </div>
                       </label>
                     </div>
+                    <div class="divider"></div>
+                    <label>
+                      Wiederholungsversuche (Retries)
+                      <input
+                        type="number"
+                        name="retries"
+                        min="0"
+                        max="20"
+                        step="1"
+                        value="0"
+                        required
+                        aria-describedby="retry-help"
+                      />
+                    </label>
+                    <p class="field-help" id="retry-help">
+                      0 = keine Wiederholung. Wiederholt werden fehlgeschlagene Aufnahmen und
+                      Seitenabrufe mit HTTP-Status 4xx/5xx. Zwei Retries erlauben insgesamt drei
+                      Versuche pro URL. Jeder Versuch wird mit seinem verfügbaren HTTP-Status
+                      dokumentiert. Nach dem letzten HTTP-Fehler wird die Fehlerseite als Warnung
+                      aufgenommen, soweit möglich.
+                    </p>
+                    <fieldset id="retry-options" class="form-reset" hidden disabled>
+                      <legend class="subheading">Wartezeit zwischen Wiederholungen</legend>
+                      <div
+                        class="segmented small"
+                        role="group"
+                        aria-label="Wartezeitart bei Wiederholungen"
+                      >
+                        <label>
+                          <input type="radio" name="retryDelayMode" value="fixed" checked />
+                          <span>Fester Zeitraum</span>
+                        </label>
+                        <label>
+                          <input type="radio" name="retryDelayMode" value="random" />
+                          <span>Zufälliger Zeitraum</span>
+                        </label>
+                      </div>
+                      <div id="fixed-retry-delay" class="delay-fields">
+                        <label>
+                          Wartezeit vor Wiederholung
+                          <div class="input-unit">
+                            <input
+                              type="number"
+                              name="retryDelay"
+                              min="0"
+                              max="86400"
+                              step="0.1"
+                              value="5"
+                              required
+                            />
+                            <span>Sekunden</span>
+                          </div>
+                        </label>
+                      </div>
+                      <div id="random-retry-delay" class="fields two-columns" hidden>
+                        <label>
+                          Mindestens
+                          <div class="input-unit">
+                            <input
+                              type="number"
+                              name="retryDelayMin"
+                              min="0"
+                              max="86400"
+                              step="0.1"
+                              value="2"
+                              required
+                            />
+                            <span>Sek.</span>
+                          </div>
+                        </label>
+                        <label>
+                          Höchstens
+                          <div class="input-unit">
+                            <input
+                              type="number"
+                              name="retryDelayMax"
+                              min="0"
+                              max="86400"
+                              step="0.1"
+                              value="10"
+                              required
+                            />
+                            <span>Sek.</span>
+                          </div>
+                        </label>
+                      </div>
+                    </fieldset>
                   </details>
                 </section>
                 <section class="card" aria-labelledby="storage-heading">

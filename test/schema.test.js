@@ -148,6 +148,28 @@ test(
       combinedOnly.includes('<mets:area FILEID="FILE_COMBINED" BETYPE="PAGE" BEGIN="1" END="2"/>'),
     );
     assert(!combinedOnly.includes('LOCREF="screenshots/'));
+    job.config.retries = 2;
+    job.records[0].attemptNumber = 2;
+    job.records[0].attempts = [
+      {
+        ...common,
+        sequence: 1,
+        eventId: 'retry-failure-event',
+        attemptNumber: 1,
+        outcome: 'failure',
+        httpStatus: 503,
+        error: 'HTTP 503: Seitenabruf fehlgeschlagen.',
+      },
+      { ...job.records[0] },
+    ];
+    const retried = buildMets(job);
+    assert(retried.includes('retry-failure-event'));
+    assert(retried.includes('EVENT_0_ATTEMPT_1'));
+    assert.deepEqual(
+      validate(retried),
+      [],
+      'Frühere Fehlversuche müssen gültig mit der erhaltenen Gesamt-PDF verknüpft bleiben.',
+    );
     delete job.combinedPdf;
     // Negative controls prove that both schemas are actually consulted.
     assert(validate(document.replace('LOCREF=', 'href=')).length > 0);

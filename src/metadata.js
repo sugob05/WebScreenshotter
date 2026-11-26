@@ -92,6 +92,10 @@ function premisEvent(record, config) {
     lazyLoad: config.lazyLoad,
     settleTimeSeconds: config.settleTime,
     delayBeforeSeconds: record.delayBeforeSeconds,
+    delayKind: record.delayKind || 'page',
+    attemptNumber: record.attemptNumber || 1,
+    maximumAttempts: (config.retries || 0) + 1,
+    retryInterrupted: Boolean(record.retryInterrupted),
     warnings: record.warnings || [],
     error: record.error || null,
     temporaryPdfPart: Boolean(record.temporaryPdf),
@@ -172,8 +176,19 @@ export function buildMets(job) {
     record.filename && !(record.temporaryPdf && job.combinedPdf);
   const files = records.filter(hasIndividualFile);
   const agents = 'AGENT_OPERATOR AGENT_TOOL AGENT_BROWSER';
+  // Earlier failures stay distinct PREMIS events. Only the last attempt can
+  // reference the retained image; EVENT_<index> remains its stable metadata ID.
+  const earlierEvents = (record, index) =>
+    (record.attempts || [])
+      .filter((attempt) => attempt.eventId !== record.eventId)
+      .map((attempt, position) => ({ id: `EVENT_${index}_ATTEMPT_${position + 1}`, attempt }));
   const recordMetadata = (record, index) =>
-    `DMD_${index} EVENT_${index}${record.filename ? ` OBJECT_${index}` : ''}`;
+    [
+      `DMD_${index}`,
+      ...earlierEvents(record, index).map(({ id }) => id),
+      `EVENT_${index}`,
+      ...(record.filename ? [`OBJECT_${index}`] : []),
+    ].join(' ');
   const metadata = [
     metadataSection('DMD_COLLECTION', 'DESCRIPTIVE', 'DC', '1.1', dublinCore(config)),
     metadataSection(
@@ -204,6 +219,9 @@ export function buildMets(job) {
     ),
     ...records.flatMap((record, index) => [
       metadataSection(`DMD_${index}`, 'DESCRIPTIVE', 'DC', '1.1', dublinCore(config, record)),
+      ...earlierEvents(record, index).map(({ id, attempt }) =>
+        metadataSection(id, 'DIGIPROV', 'PREMIS:EVENT', '3.0', premisEvent(attempt, config)),
+      ),
       ...(record.filename
         ? [
             metadataSection(
